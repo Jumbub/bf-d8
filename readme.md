@@ -4,7 +4,12 @@
 
 ## Benchmarks
 
-### Initial
+Benchmarking run on `tests/mandelbrot.b`
+
+##### [First working code](https://github.com/Jumbub/bf/commit/435d6bc0fd33609b6f63d579fb770a64a21c2f46)
+
+> 63.00s user 0.02s system 100% cpu 1:03.00 total
+
 
 ## Setup
 
@@ -49,3 +54,5 @@ find tests/*.b | grep -oP "(?<=/)[\-\w]+(?=.b)" | xargs -n 1 sh -c '<d8-executab
 
 - [BF](https://esolangs.org/wiki/Brainfuck)
 - [Very fast interpreters, transpilers and programs](https://github.com/rdebath/Brainfuck)
+- [Great intro into BF](https://gist.github.com/roachhd/dce54bec8ba55fb17d3a)
+- [Optimizing brainfuck compiler](https://www.nayuki.io/page/optimizing-brainfuck-compiler)

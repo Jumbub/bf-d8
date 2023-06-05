@@ -1,31 +1,18 @@
 'use strict';
 
-/** @typedef {('>'|'<'|'+'|'-'|'.'|','|'['|']')} StringToken */
-/** @global {StringToken[]} STRING_TOKENS */
-const STRING_TOKENS = ['>', '<', '+', '-', '.', ',', '[', ']'];
+load('./src/tokenizer.js');
 
-/** @param {StringToken[]} tokens */
-const validateBraces = tokens => {
-  const unmatchedBracesCount = tokens.reduce((openBraces, token) => {
-    let inc = token === '[' ? 1 : token === ']' ? -1 : 0;
-    if (openBraces + inc < 0) throw 'Error: attempting to close brace without matching opening brace';
-    return openBraces + inc;
-  }, 0);
-  if (unmatchedBracesCount !== 0) throw 'Error: has unmatched braces';
-};
+const DATA_LENGTH = 30000;
+const DATA_TYPE = Uint8Array;
 
 /** @param {string} code */
 const execute = code => {
-  const tokens = code.split('').filter(command => STRING_TOKENS.includes(command));
+  const tokens = tokenize(code);
 
-  validateBraces(tokens);
-
-  let data = [];
+  let data = new DATA_TYPE(DATA_LENGTH);
   let dataI = 0;
   for (let tokenI = 0; tokenI < tokens.length; tokenI++) {
     if (data[dataI] === undefined) data[dataI] = 0;
-
-    // print(`ip:${tokenI}, i:${tokens[tokenI]}, dp:${dataI}, d:${data[dataI]}`);
 
     switch (tokens[tokenI]) {
       case '>':
