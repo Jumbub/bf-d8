@@ -1,5 +1,6 @@
 load('./src/simplifyPair.js');
 load('./src/simplifyTriplet.js');
+load('./src/simplifyLoop.js');
 
 const braceOffsetFixer = instructions => {
   let openedBracePositions = [];
@@ -60,6 +61,27 @@ const instructionSimplifier = instructions => {
       simpler.push(...(simpleTriplet ?? [left, middle, right]));
     }
     instructions = [...simpler];
+
+    // loops
+    let loops = [[]];
+    for (let i = 0; i < instructions.length; i++) {
+      loops = loops.map(loop => [...loop, instructions[i]]);
+
+      if (instructions[i][0] === IF_ZERO_GOTO) {
+        loops.push([instructions[i]]);
+      } else if (instructions[i][0] === IF_NOT_ZERO_GOTO) {
+        let current = loops.pop();
+
+        const simplified = simplifyLoop(current);
+        if (simplified) mutated = true;
+
+        loops = loops.map(loop => {
+          const beforeLoop = loop.splice(0, loop.length - current.length);
+          return [...beforeLoop, ...(simplified ?? current)];
+        });
+      }
+    }
+    instructions = [...loops[0]];
   } while (mutated);
 
   return braceOffsetFixer(instructions);

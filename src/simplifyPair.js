@@ -2,26 +2,29 @@ const simplifyPair = (left, right) => {
   const [leftI, leftOffset, leftValue] = left;
   const [rightI, rightOffset, rightValue] = right;
 
-  if (leftI === MUTATE && rightI === MUTATE && leftOffset === rightOffset) {
+  if (leftI === ADD && rightI === ADD && leftOffset === rightOffset) {
     // merge mutations at same offset
-    return [mutateFactory(leftOffset, leftValue + rightValue)];
-  } else if (leftI === MUTATE && rightI === MUTATE && leftOffset > rightOffset) {
+    return [addFactory(leftOffset, leftValue + rightValue)];
+  } else if (leftI === ADD && rightI === ADD && leftOffset > rightOffset) {
     return [right, left];
-  } else if (leftI === MUTATE && rightI === INPUT && leftOffset === rightOffset) {
+  } else if (leftI === ADD && rightI === INPUT && leftOffset === rightOffset) {
     // input overrides mutation
     return [right];
-  } else if (leftI === MUTATE && rightI === INPUT && leftOffset > rightOffset) {
+  } else if (leftI === ADD && rightI === INPUT && leftOffset > rightOffset) {
     // order left to right
     return [right, left];
-  } else if (leftI === MUTATE && rightI === OUTPUT && leftOffset > rightOffset) {
+  } else if (leftI === ADD && rightI === OUTPUT && leftOffset > rightOffset) {
     // order left to right
     return [right, left];
+  } else if (leftI === MOVE && rightI === MOVE && leftOffset + rightOffset === 0) {
+    // remove movement
+    return [];
   } else if (leftI === MOVE && rightI === MOVE) {
     // merge movements
     return [moveFactory(leftOffset + rightOffset)];
-  } else if (leftI === MOVE && rightI === MUTATE) {
+  } else if (leftI === MOVE && rightI === ADD) {
     // prioritise mutations first, accumulating offsets to match operation outcomes
-    return [mutateFactory(leftOffset + rightOffset, rightValue), moveFactory(leftOffset + rightOffset)];
+    return [addFactory(leftOffset + rightOffset, rightValue), moveFactory(leftOffset + rightOffset)];
   } else if (leftI === MOVE && rightI === INPUT) {
     // prioritise mutations first, accumulating offsets to match operation outcomes
     return [inputFactory(leftOffset + rightOffset), moveFactory(leftOffset + rightOffset)];
@@ -31,13 +34,13 @@ const simplifyPair = (left, right) => {
   } else if (leftI === MOVE && leftOffset === 0 && rightI === IF_NOT_ZERO_GOTO) {
     // noop
     return [right];
-  } else if (leftI === INPUT && rightI === MUTATE && leftOffset > rightOffset) {
+  } else if (leftI === INPUT && rightI === ADD && leftOffset > rightOffset) {
     return [right, left];
   } else if (leftI === INPUT && rightI === INPUT && leftOffset > rightOffset) {
     return [right, left];
   } else if (leftI === INPUT && rightI === OUTPUT && leftOffset > rightOffset) {
     return [right, left];
-  } else if (leftI === OUTPUT && rightI === MUTATE && leftOffset > rightOffset) {
+  } else if (leftI === OUTPUT && rightI === ADD && leftOffset > rightOffset) {
     return [right, left];
   } else if (leftI === OUTPUT && rightI === INPUT && leftOffset > rightOffset) {
     return [right, left];

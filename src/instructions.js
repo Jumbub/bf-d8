@@ -1,6 +1,6 @@
 load('./src/braces.js');
 
-const MUTATE = 'mutate';
+const ADD = 'add';
 const MOVE = 'move';
 const INPUT = 'input';
 const OUTPUT = 'output';
@@ -13,8 +13,8 @@ const LABEL_OFFSET = 0;
 const OFFSET_OFFSET = 1;
 const VALUE_OFFSET = 2;
 
-const mutateFactory = (offset, value) => {
-  return [MUTATE, offset, value];
+const addFactory = (offset, value) => {
+  return [ADD, offset, value];
 };
 const moveFactory = offset => {
   return [MOVE, offset];
@@ -41,9 +41,9 @@ const moveTilZeroFactory = offset => {
 const nonLoopInstructionFactory = token => {
   switch (token) {
     case '+':
-      return mutateFactory(0, 1);
+      return addFactory(0, 1);
     case '-':
-      return mutateFactory(0, -1);
+      return addFactory(0, -1);
     case '>':
       return moveFactory(1);
     case '<':

@@ -1,5 +1,80 @@
 # Thoughts
 
+## Hash map
+
+> The final form of rapid optimisation strategies, hash-maps
+
+##### Batch operations
+
+Sequential operations should be batchable to reduce "instruction parsing" time.
+
+The batching is based on state of system, and only possible under certain conditions.
+
+</br>
+
+
+## Representation
+
+#### Analysis
+
+##### Linked list
+
+Requires no re-computation of offsets because each node can reference another node directly.
+
+##### Tree
+
+Allows simplification without losing data. Each simplified representation can have it's derivation as child nodes.
+
+Also has implicit array storage as an array is represented as just an ordered set of children nodes with a node marked as "array".
+
+#### Runtime
+
+##### Single operation representation
+
+> operations have meta-data to simplify representation
+
+`add`
+
+- value: the value to increment or decrement by
+- offset: the relative position of the variable to mutate
+
+`move`
+
+- value: the value to move by
+
+`input`
+
+- offset: the relative position of the variable to write in
+
+`output`
+
+- offset: the relative position of the variable to print out
+
+`while`
+
+- code: the operations within the loop
+
+##### Fastest way to read and execute instructions?
+
+Fast data type for storage of instructions: `Uint32Array`
+
+> the size of "meta" must be large enough to store the minimum between a complete wrap of the tape or incrementing to the largest number (Uint16 may work, but let's optimise this later)
+
+Uniform storage of all instructions and meta-data: `[instruction, meta-1, meta-2]`
+
+## Execution environments
+
+> impact of execution environments
+
+Deno?
+
+Node.js?
+
+D8?
+
+</br>
+
+
 ## Optimisations
 
 ##### Removal comments
@@ -104,63 +179,14 @@ Operations simplified:
 - `if 0 goto <matching brace>`
 - `if not 0 goto <matching brace>`
 
-</br>
+Operation simplification options:
 
+> where O is address offset, and V is the value of the operation
 
-## Hash map
-
-> The final form of rapid optimisation strategies, hash-maps
-
-##### Batch operations
-
-Sequential operations should be batchable to reduce "instruction parsing" time.
-
-The batching is based on state of system, and only possible under certain conditions.
-
-</br>
-
-
-## Runtime representation
-
-##### Single operation representation
-
-> operations have meta-data to simplify representation
-
-`mutate`
-
-- value: the value to increment or decrement by
-- offset: the relative position of the variable to mutate
-
-`move`
-
-- value: the value to move by
-
-`input`
-
-- offset: the relative position of the variable to write in
-
-`output`
-
-- offset: the relative position of the variable to print out
-
-`while`
-
-- code: the operations within the loop
-
-##### Fastest way to read and execute instructions?
-
-Fast data type for storage of instructions: `Uint32Array`
-
-> the size of "meta" must be large enough to store the minimum between a complete wrap of the tape or incrementing to the largest number (Uint16 may work, but let's optimise this later)
-
-Uniform storage of all instructions and meta-data: `[instruction, meta-1, meta-2]`
-
-## Execution environments
-
-> impact of execution environments
-
-Deno?
-
-Node.js?
-
-D8?
+- `add <offset> <value>`
+- `set <offset> <value>`
+- `move <offset>`
+- `input <offset>`
+- `output <offset>`
+- `if 0 goto <matching brace>`
+- `if not 0 goto <matching brace>`

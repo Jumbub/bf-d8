@@ -18,7 +18,7 @@ const execute = code => {
     const label = instruction[LABEL_OFFSET];
     const offset = instruction[OFFSET_OFFSET];
     switch (label) {
-      case MUTATE:
+      case ADD:
         data[dataI + offset] += instruction[VALUE_OFFSET];
         break;
 

@@ -26,7 +26,7 @@ Benchmarking run on `tests/mandelbrot.b`
 
 > bout 400% increase in performance (from slightly more lazy undefined value checking than above)
 
-##### Aliasing the reset value loop `[mutate]`
+##### Aliasing the reset value loop `[add]`
 
 > 2% increase in performance
 
