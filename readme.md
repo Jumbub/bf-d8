@@ -34,6 +34,10 @@ Benchmarking run on `tests/mandelbrot.b`
 
 > 50% increase in performance
 
+##### Remove empty move operations at the end of loops
+
+> 1.5% increase in performance
+
 ## Setup
 
 - [Build V8](https://v8.dev/docs/build)
