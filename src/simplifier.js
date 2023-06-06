@@ -1,47 +1,5 @@
-const simplifyPair = (left, right) => {
-  const [leftI, leftOffset, leftValue] = left;
-  const [rightI, rightOffset, rightValue] = right;
-
-  if (leftI === MUTATE && rightI === MUTATE && leftOffset === rightOffset) {
-    // merge mutations at same offset
-    return [mutateFactory(leftOffset, leftValue + rightValue)];
-  } else if (leftI === MUTATE && rightI === MUTATE && leftOffset > rightOffset) {
-    return [right, left];
-  } else if (leftI === MUTATE && rightI === INPUT && leftOffset === rightOffset) {
-    // input overrides mutation
-    return [right];
-  } else if (leftI === MUTATE && rightI === INPUT && leftOffset > rightOffset) {
-    // order left to right
-    return [right, left];
-  } else if (leftI === MUTATE && rightI === OUTPUT && leftOffset > rightOffset) {
-    // order left to right
-    return [right, left];
-  } else if (leftI === MOVE && rightI === MOVE) {
-    // merge movements
-    return [moveFactory(leftOffset + rightOffset)];
-  } else if (leftI === MOVE && rightI === MUTATE) {
-    // prioritise mutations first, accumulating offsets to match operation outcomes
-    return [mutateFactory(leftOffset + rightOffset, rightValue), moveFactory(leftOffset + rightOffset)];
-  } else if (leftI === MOVE && rightI === INPUT) {
-    // prioritise mutations first, accumulating offsets to match operation outcomes
-    return [inputFactory(leftOffset + rightOffset), moveFactory(leftOffset + rightOffset)];
-  } else if (leftI === MOVE && rightI === OUTPUT) {
-    // prioritise mutations first, accumulating offsets to match operation outcomes
-    return [outputFactory(leftOffset + rightOffset), moveFactory(leftOffset + rightOffset)];
-  } else if (leftI === INPUT && rightI === MUTATE && leftOffset > rightOffset) {
-    return [right, left];
-  } else if (leftI === INPUT && rightI === INPUT && leftOffset > rightOffset) {
-    return [right, left];
-  } else if (leftI === INPUT && rightI === OUTPUT && leftOffset > rightOffset) {
-    return [right, left];
-  } else if (leftI === OUTPUT && rightI === MUTATE && leftOffset > rightOffset) {
-    return [right, left];
-  } else if (leftI === OUTPUT && rightI === INPUT && leftOffset > rightOffset) {
-    return [right, left];
-  }
-
-  return undefined;
-};
+load('./src/simplifyPair.js');
+load('./src/simplifyTriplet.js');
 
 const braceOffsetFixer = instructions => {
   let openedBracePositions = [];
@@ -60,20 +18,46 @@ const braceOffsetFixer = instructions => {
 };
 
 const instructionSimplifier = instructions => {
-  if (instructions.length === 0) return instructions;
+  if (instructions.length < 2) return instructions;
 
   let mutated;
+  let simpler;
   do {
-    let simpler = [instructions[0]];
     mutated = false;
+    print('looping simplifyer!');
+
+    // pairs
+    simpler = [instructions[0]];
     for (let i = 1; i < instructions.length; i++) {
       const left = simpler.pop();
       const right = instructions[i];
-      let simplePair = simplifyPair(left, right);
 
+      let simplePair = simplifyPair(left, right);
       if (simplePair) mutated = true;
 
       simpler.push(...(simplePair ?? [left, right]));
+    }
+    instructions = [...simpler];
+
+    // triples
+    simpler = [instructions[0], instructions[1]];
+    for (let i = 2; i < instructions.length; i++) {
+      const middle = simpler.pop();
+      const left = simpler.pop();
+      const right = instructions[i];
+
+      if (middle === undefined) {
+        simpler.push(right);
+        continue;
+      } else if (left === undefined) {
+        simpler.push(...[middle, right]);
+        continue;
+      }
+
+      let simpleTriplet = simplifyTriplet(left, middle, right);
+      if (simpleTriplet) mutated = true;
+
+      simpler.push(...(simpleTriplet ?? [left, middle, right]));
     }
     instructions = [...simpler];
   } while (mutated);

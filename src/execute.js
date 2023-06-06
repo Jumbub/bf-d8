@@ -22,8 +22,18 @@ const execute = code => {
         data[dataI + offset] += instruction[VALUE_OFFSET];
         break;
 
+      case SET:
+        data[dataI + offset] = instruction[VALUE_OFFSET];
+        break;
+
       case MOVE:
         dataI += instruction[OFFSET_OFFSET];
+        break;
+
+      case MOVE_TIL_ZERO:
+        while (data[dataI]) {
+          dataI += offset;
+        }
         break;
 
       case OUTPUT:

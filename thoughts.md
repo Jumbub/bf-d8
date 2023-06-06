@@ -57,6 +57,12 @@
 `>+<` => `add d[p + 1] 1`
 `>>+++<<` => `add d[p + 2] 3`
 
+##### Assume loops terminate
+
+> if the loop only contains mutations, assume that its just reseting to 0, otherwise it's a non terminating loop. We assume programs do not contain non terminating loops.
+
+`[++]` => `set d[p] 0`
+
 ##### Clear and assign value
 
 > any "set zero" loops followed by incrementing instructions can be replaced with assignment
