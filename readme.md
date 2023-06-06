@@ -38,6 +38,10 @@ Benchmarking run on `tests/mandelbrot.b`
 
 > 1.5% increase in performance
 
+##### Replace copy loops with fixed operation
+
+> 15% performance decrease!!!
+
 ## Setup
 
 - [Build V8](https://v8.dev/docs/build)
