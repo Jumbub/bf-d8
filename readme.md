@@ -18,6 +18,10 @@ Benchmarking run on `tests/mandelbrot.b`
 
 > bout 20% increase in performance (from slightly more lazy undefined value checking than above)
 
+##### Merging increment operations made no difference
+
+> bout 20% increase in performance (from slightly more lazy undefined value checking than above)
+
 ## Setup
 
 - [Build V8](https://v8.dev/docs/build)
