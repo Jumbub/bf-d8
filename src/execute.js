@@ -3,13 +3,17 @@
 load('./src/tokenizer.js');
 load('./src/instructions.js');
 load('./src/simplifier.js');
+load('./src/visualise.js');
 
 const DATA_LENGTH = 30000;
 const DATA_TYPE = Uint8Array;
 
 /** @param {string} code */
 const execute = code => {
-  const instructions = instructionSimplifier(instructionsFactory(tokenize(code)));
+  const initialInstructions = instructionsFactory(tokenize(code));
+  const instructions = instructionSimplifier(initialInstructions);
+  visualise(instructions);
+  print(initialInstructions.length, ' instructions shrunk to ', instructions.length);
 
   let data = new DATA_TYPE(DATA_LENGTH);
   let dataI = 0;

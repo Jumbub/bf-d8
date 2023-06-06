@@ -3,6 +3,9 @@ const simplifyLoop = allInstructions => {
 
   const [first, firstOffset, firstValue] = allInstructions[1];
 
+  const nonBraceInstructions = allInstructions.filter(
+    ([label]) => label !== IF_NOT_ZERO_GOTO && label !== IF_ZERO_GOTO,
+  );
   const addInstructions = allInstructions.filter(([label]) => label === ADD);
   const onlyAddInstructions = addInstructions.length === allInstructions.length - 2;
   const zeroOffsets = addInstructions.filter(([, offset]) => offset === 0);
@@ -31,6 +34,9 @@ const simplifyLoop = allInstructions => {
     // only run simplification after the pairs are simplified, i.e. only 1 zero offset add left
     const copyTo = nonZeroOffsets.map(([, offset, multiplyer]) => copyToFactory(offset, multiplyer / -firstValue));
     return [...copyTo, setFactory(0, 0)];
+  } else if (nonBraceInstructions.every(([label]) => [INPUT, OUTPUT].includes(label))) {
+    // WARNING: aggressive optimisation technique, assumes valid program with terminating loop, in which case, the only way to exit the loop is to mutate the pointer position or the data
+    return [];
   }
 
   return undefined;
