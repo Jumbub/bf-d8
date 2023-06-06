@@ -1,6 +1,7 @@
 'use strict';
 
 load('./src/tokenizer.js');
+load('./src/instructions.js');
 
 const DATA_LENGTH = 30000;
 const DATA_TYPE = Uint8Array;
@@ -8,6 +9,8 @@ const DATA_TYPE = Uint8Array;
 /** @param {string} code */
 const execute = code => {
   const tokens = tokenize(code);
+  const instructions = instructionsFactory(tokens);
+  print(instructions);
 
   let data = new DATA_TYPE(DATA_LENGTH);
   let dataI = 0;

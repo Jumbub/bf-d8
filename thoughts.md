@@ -148,3 +148,13 @@ Fast data type for storage of instructions: `Uint32Array`
 > the size of "meta" must be large enough to store the minimum between a complete wrap of the tape or incrementing to the largest number (Uint16 may work, but let's optimise this later)
 
 Uniform storage of all instructions and meta-data: `[instruction, meta-1, meta-2]`
+
+## Execution environments
+
+> impact of execution environments
+
+Deno?
+
+Node.js?
+
+D8?

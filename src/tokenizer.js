@@ -1,6 +1,7 @@
 'use strict';
 
-/** @typedef {('>'|'<'|'+'|'-'|'.'|','|'['|']')} Token */
+/** @typedef {('>'|'<'|'+'|'-'|'.'|',')} OperationToken */
+/** @typedef {(OperationToken|'['|']')} Token */
 /** @global {Token[]} TOKENS */
 const TOKENS = ['>', '<', '+', '-', '.', ',', '[', ']'];
 
