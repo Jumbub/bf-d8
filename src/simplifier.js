@@ -2,11 +2,13 @@ const simplifyPair = (left, right) => {
   const [leftI, leftOffset, leftValue] = left;
   const [rightI, rightOffset, rightValue] = right;
 
-  if (leftI === MUTATE && rightI === MUTATE && leftOffset === 0 && leftOffset === rightOffset) {
-    return [mutateFactory(0, leftValue + rightValue)];
+  if (leftI === MUTATE && rightI === MUTATE && leftOffset === rightOffset) {
+    return [mutateFactory(leftOffset, leftValue + rightValue)];
+  } else if (leftI === MOVE && rightI === MOVE) {
+    return [moveFactory(leftOffset + rightOffset)];
   }
 
-  return [left, right];
+  return undefined;
 };
 
 const braceOffsetFixer = instructions => {
@@ -26,13 +28,23 @@ const braceOffsetFixer = instructions => {
 };
 
 const instructionSimplifier = instructions => {
-  let simpler = [instructions[0]];
+  if (instructions.length === 0) return instructions;
 
-  for (let i = 1; i < instructions.length; i++) {
-    const left = simpler.pop();
-    const right = instructions[i];
-    simpler.push(...simplifyPair(left, right));
-  }
+  let mutated;
+  do {
+    let simpler = [instructions[0]];
+    mutated = false;
+    for (let i = 1; i < instructions.length; i++) {
+      const left = simpler.pop();
+      const right = instructions[i];
+      let simplePair = simplifyPair(left, right);
 
-  return braceOffsetFixer(simpler);
+      if (simplePair) mutated = true;
+
+      simpler.push(...(simplePair ?? [left, right]));
+    }
+    instructions = [...simpler];
+  } while (mutated);
+
+  return braceOffsetFixer(instructions);
 };
