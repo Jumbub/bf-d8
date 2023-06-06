@@ -28,6 +28,9 @@ const simplifyPair = (left, right) => {
   } else if (leftI === MOVE && rightI === OUTPUT) {
     // prioritise mutations first, accumulating offsets to match operation outcomes
     return [outputFactory(leftOffset + rightOffset), moveFactory(leftOffset + rightOffset)];
+  } else if (leftI === MOVE && leftOffset === 0 && rightI === IF_NOT_ZERO_GOTO) {
+    // noop
+    return [right];
   } else if (leftI === INPUT && rightI === MUTATE && leftOffset > rightOffset) {
     return [right, left];
   } else if (leftI === INPUT && rightI === INPUT && leftOffset > rightOffset) {
