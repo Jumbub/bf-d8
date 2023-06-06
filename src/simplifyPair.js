@@ -2,18 +2,21 @@ const simplifyPair = (left, right) => {
   const [leftI, leftOffset, leftValue] = left;
   const [rightI, rightOffset, rightValue] = right;
 
+  // ensure 0 offset operations are at the front to simplify simplification code
+  const rightIsBaseOperation = rightOffset === 0 && leftOffset !== 0;
+
   if (leftI === ADD && rightI === ADD && leftOffset === rightOffset) {
     // merge mutations at same offset
     return [addFactory(leftOffset, leftValue + rightValue)];
-  } else if (leftI === ADD && rightI === ADD && leftOffset > rightOffset) {
+  } else if (leftI === ADD && rightI === ADD && rightIsBaseOperation) {
     return [right, left];
   } else if (leftI === ADD && rightI === INPUT && leftOffset === rightOffset) {
     // input overrides mutation
     return [right];
-  } else if (leftI === ADD && rightI === INPUT && leftOffset > rightOffset) {
+  } else if (leftI === ADD && rightI === INPUT && rightIsBaseOperation) {
     // order left to right
     return [right, left];
-  } else if (leftI === ADD && rightI === OUTPUT && leftOffset > rightOffset) {
+  } else if (leftI === ADD && rightI === OUTPUT && rightIsBaseOperation) {
     // order left to right
     return [right, left];
   } else if (leftI === MOVE && rightI === MOVE && leftOffset + rightOffset === 0) {
@@ -34,15 +37,15 @@ const simplifyPair = (left, right) => {
   } else if (leftI === MOVE && leftOffset === 0 && rightI === IF_NOT_ZERO_GOTO) {
     // noop
     return [right];
-  } else if (leftI === INPUT && rightI === ADD && leftOffset > rightOffset) {
+  } else if (leftI === INPUT && rightI === ADD && rightIsBaseOperation) {
     return [right, left];
-  } else if (leftI === INPUT && rightI === INPUT && leftOffset > rightOffset) {
+  } else if (leftI === INPUT && rightI === INPUT && rightIsBaseOperation) {
     return [right, left];
-  } else if (leftI === INPUT && rightI === OUTPUT && leftOffset > rightOffset) {
+  } else if (leftI === INPUT && rightI === OUTPUT && rightIsBaseOperation) {
     return [right, left];
-  } else if (leftI === OUTPUT && rightI === ADD && leftOffset > rightOffset) {
+  } else if (leftI === OUTPUT && rightI === ADD && rightIsBaseOperation) {
     return [right, left];
-  } else if (leftI === OUTPUT && rightI === INPUT && leftOffset > rightOffset) {
+  } else if (leftI === OUTPUT && rightI === INPUT && rightIsBaseOperation) {
     return [right, left];
   }
 

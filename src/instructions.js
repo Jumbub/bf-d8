@@ -8,6 +8,7 @@ const IF_ZERO_GOTO = 'if_zero_goto';
 const IF_NOT_ZERO_GOTO = 'if_not_zero_goto';
 const SET = 'set';
 const MOVE_TIL_ZERO = 'move_til_zero';
+const COPY_TO = 'copy_to';
 
 const LABEL_OFFSET = 0;
 const OFFSET_OFFSET = 1;
@@ -36,6 +37,9 @@ const setFactory = (offset, value) => {
 };
 const moveTilZeroFactory = offset => {
   return [MOVE_TIL_ZERO, offset];
+};
+const copyToFactory = (offset, multiplyer) => {
+  return [COPY_TO, offset, multiplyer];
 };
 
 const nonLoopInstructionFactory = token => {

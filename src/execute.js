@@ -26,6 +26,10 @@ const execute = code => {
         data[dataI + offset] = instruction[VALUE_OFFSET];
         break;
 
+      case COPY_TO:
+        data[dataI + offset] += data[dataI] * instruction[VALUE_OFFSET];
+        break;
+
       case MOVE:
         dataI += instruction[OFFSET_OFFSET];
         break;
