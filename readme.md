@@ -26,6 +26,14 @@ Benchmarking run on `tests/mandelbrot.b`
 
 > bout 400% increase in performance (from slightly more lazy undefined value checking than above)
 
+##### Aliasing the reset value loop `[mutate]`
+
+> 2% increase in performance
+
+##### Aliasing the "move til zero" loop `[move]`
+
+> 50% increase in performance
+
 ## Setup
 
 - [Build V8](https://v8.dev/docs/build)
