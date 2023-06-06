@@ -14,6 +14,10 @@ Benchmarking run on `tests/mandelbrot.b`
 
 > bout 10% increase in performance (from slightly more lazy undefined value checking than above)
 
+##### Pre computing loop jumps, and pre processing commands slightly
+
+> bout 20% increase in performance (from slightly more lazy undefined value checking than above)
+
 ## Setup
 
 - [Build V8](https://v8.dev/docs/build)
