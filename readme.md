@@ -18,9 +18,13 @@ Benchmarking run on `tests/mandelbrot.b`
 
 > bout 20% increase in performance (from slightly more lazy undefined value checking than above)
 
-##### Merging increment operations made no difference
+##### Merging increment operations
 
 > bout 20% increase in performance (from slightly more lazy undefined value checking than above)
+
+##### Merging pointer movement operations
+
+> bout 400% increase in performance (from slightly more lazy undefined value checking than above)
 
 ## Setup
 
