@@ -10,6 +10,9 @@ Benchmarking run on `tests/mandelbrot.b`
 
 > 63.00s user 0.02s system 100% cpu 1:03.00 total
 
+##### Using Uint8Array for data storage
+
+> bout 10% increase in performance (from slightly more lazy undefined value checking than above)
 
 ## Setup
 

@@ -8,62 +8,38 @@ const DATA_TYPE = Uint8Array;
 
 /** @param {string} code */
 const execute = code => {
-  const tokens = tokenize(code);
-  const instructions = instructionsFactory(tokens);
+  const instructions = instructionsFactory(tokenize(code));
   print(instructions);
 
   let data = new DATA_TYPE(DATA_LENGTH);
   let dataI = 0;
-  for (let tokenI = 0; tokenI < tokens.length; tokenI++) {
-    if (data[dataI] === undefined) data[dataI] = 0;
-
-    switch (tokens[tokenI]) {
-      case '>':
-        dataI++;
+  for (let tokenI = 0; tokenI < instructions.length; tokenI++) {
+    const instruction = instructions[tokenI];
+    const label = instruction[LABEL_OFFSET];
+    const offset = instruction[OFFSET_OFFSET];
+    switch (label) {
+      case MUTATE:
+        data[dataI + offset] += instruction[VALUE_OFFSET];
         break;
 
-      case '<':
-        dataI--;
+      case MOVE:
+        dataI += instruction[OFFSET_OFFSET];
         break;
 
-      case '+':
-        data[dataI]++;
+      case OUTPUT:
+        write(String.fromCharCode(data[dataI + offset]));
         break;
 
-      case '-':
-        data[dataI]--;
+      case INPUT:
+        data[dataI + offset] = readline().charCodeAt(0);
         break;
 
-      case '.':
-        write(String.fromCharCode(data[dataI]));
+      case IF_ZERO_GOTO:
+        if (data[dataI] === 0) tokenI += offset;
         break;
 
-      case ',':
-        data[dataI] = readline().charCodeAt(0);
-        break;
-
-      case '[':
-        if (data[dataI] === 0) {
-          let innerBraces = 0;
-          tokenI++;
-          while (!(tokens[tokenI] === ']' && innerBraces === 0)) {
-            if (tokens[tokenI] === '[') innerBraces++;
-            else if (tokens[tokenI] === ']') innerBraces--;
-            tokenI++;
-          }
-        }
-        break;
-
-      case ']':
-        if (data[dataI] !== 0) {
-          let innerBraces = 0;
-          tokenI--;
-          while (!(tokens[tokenI] === '[' && innerBraces === 0)) {
-            if (tokens[tokenI] === ']') innerBraces++;
-            else if (tokens[tokenI] === '[') innerBraces--;
-            tokenI--;
-          }
-        }
+      case IF_NOT_ZERO_GOTO:
+        if (data[dataI] !== 0) tokenI += offset;
         break;
     }
   }

@@ -1,12 +1,18 @@
-const MUTATE = Symbol();
-const MOVE = Symbol();
-const INPUT = Symbol();
-const OUTPUT = Symbol();
-const IF_ZERO_GOTO = Symbol();
-const IF_NOT_ZERO_GOTO = Symbol();
+load('./src/braces.js');
+
+const MUTATE = 'mutate';
+const MOVE = 'move';
+const INPUT = 'input';
+const OUTPUT = 'output';
+const IF_ZERO_GOTO = 'if_zero_goto';
+const IF_NOT_ZERO_GOTO = 'if_not_zero_goto';
+
+const LABEL_OFFSET = 0;
+const OFFSET_OFFSET = 1;
+const VALUE_OFFSET = 2;
 
 const mutateFactory = (value, offset) => {
-  return [MUTATE, value, offset];
+  return [MUTATE, offset, value];
 };
 const moveFactory = offset => {
   return [MOVE, offset];
@@ -35,20 +41,20 @@ const nonLoopInstructionFactory = token => {
     case '<':
       return moveFactory(-1);
     case '.':
-      return outputFactory(1);
+      return outputFactory(0);
     case ',':
-      return inputFactory(-1);
+      return inputFactory(0);
     default:
       throw new Error('Only non-loop instructions');
   }
 };
 
-const loopInstructionFactory = (token, tokenPosition, tokens) => {
+const loopInstructionFactory = (token, tokens, tokenPosition) => {
   switch (token) {
     case '[':
-      return gotoIfZeroFactory(NaN);
+      return gotoIfZeroFactory(findMatchingCloseBraceOffset(tokens, tokenPosition));
     case ']':
-      return gotoIfNotZeroFactory(NaN);
+      return gotoIfNotZeroFactory(findMatchingOpenBraceOffset(tokens, tokenPosition));
     default:
       throw new Error('Only loop instructions');
   }
@@ -63,23 +69,13 @@ const instructionsFactory = tokens => {
   let instructions = [];
   let offset = 0;
   let token = undefined;
-  print('tokens', tokens.join(''));
-  while ((token = tokens[offset]) !== undefined) {
-    print('token', token);
-    switch (token) {
-      case '[':
-        const closingBraceLocation = findMatchingClosingBracePosition(tokens, offset);
-        const loopTokens = tokens.splice(offset, closingBraceLocation - 1);
-        offset = closingBraceLocation + 1; // Next iteration should skip closing brace
-        print(offset, token, closingBraceLocation);
-        instructions.push(instructionsFactory(loopTokens));
-      case ']':
-        throw new Error('Program with valid bracing should never reach this state');
-      default:
-        offset += 1;
-        instructions.push(nonLoopInstructionFactory(token));
+  while ((token = tokens[offset++]) !== undefined) {
+    if (token === '[' || token === ']') {
+      instructions.push(loopInstructionFactory(token, tokens, offset - 1));
+    } else {
+      instructions.push(nonLoopInstructionFactory(token));
     }
   }
 
-  print('done');
+  return instructions;
 };
