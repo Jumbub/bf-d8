@@ -11,7 +11,7 @@ const LABEL_OFFSET = 0;
 const OFFSET_OFFSET = 1;
 const VALUE_OFFSET = 2;
 
-const mutateFactory = (value, offset) => {
+const mutateFactory = (offset, value) => {
   return [MUTATE, offset, value];
 };
 const moveFactory = offset => {
@@ -33,9 +33,9 @@ const gotoIfNotZeroFactory = offset => {
 const nonLoopInstructionFactory = token => {
   switch (token) {
     case '+':
-      return mutateFactory(1, 0);
+      return mutateFactory(0, 1);
     case '-':
-      return mutateFactory(-1, 0);
+      return mutateFactory(0, -1);
     case '>':
       return moveFactory(1);
     case '<':

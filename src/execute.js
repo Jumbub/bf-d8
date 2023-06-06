@@ -2,14 +2,14 @@
 
 load('./src/tokenizer.js');
 load('./src/instructions.js');
+load('./src/simplifier.js');
 
 const DATA_LENGTH = 30000;
 const DATA_TYPE = Uint8Array;
 
 /** @param {string} code */
 const execute = code => {
-  const instructions = instructionsFactory(tokenize(code));
-  print(instructions);
+  const instructions = instructionSimplifier(instructionsFactory(tokenize(code)));
 
   let data = new DATA_TYPE(DATA_LENGTH);
   let dataI = 0;
@@ -41,6 +41,9 @@ const execute = code => {
       case IF_NOT_ZERO_GOTO:
         if (data[dataI] !== 0) tokenI += offset;
         break;
+
+      default:
+        throw new Error(`Unknown operator ${label}`);
     }
   }
 };
