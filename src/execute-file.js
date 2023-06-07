@@ -5,4 +5,4 @@ const code = read(fileName);
 
 execute(code);
 
-print(`BF_END ${performance.now()}ms`);
+print(`program terminated ${performance.now()}ms`);

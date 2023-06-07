@@ -1,19 +1,33 @@
 'use strict';
 
 load('./src/tokenizer.js');
-load('./src/instructions.js');
-load('./src/simplifier.js');
-load('./src/visualise.js');
+load('./src/nodeify.js');
+load('./src/simplify.js');
+// load('./src/instructions.js');
+// load('./src/simplifier.js');
+// load('./src/visualise.js');
 
 const DATA_LENGTH = 30000;
 const DATA_TYPE = Uint8Array;
 
 /** @param {string} code */
 const execute = code => {
+  const tokens = tokenize(code);
+  print('TOKENS:', JSON.stringify(tokens));
+  const node = nodeify(tokens);
+  print('NODES:', JSON.stringify(node));
+  const simplified = simplify([node]);
+  print('SIMPLIFIED:', JSON.stringify(simplified));
+
+  print(simplified[0]);
+
+  return;
+
   const initialInstructions = instructionsFactory(tokenize(code));
   const instructions = instructionSimplifier(initialInstructions);
   visualise(instructions);
   print(initialInstructions.length, ' instructions shrunk to ', instructions.length);
+  // exit();
 
   let data = new DATA_TYPE(DATA_LENGTH);
   let dataI = 0;
