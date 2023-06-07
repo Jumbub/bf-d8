@@ -27,10 +27,10 @@ const visualise = instructions => {
         print(`p += ${offset}`);
         break;
       case INPUT:
-        print(`[${offset}] = getChar()`);
+        print(`d[p+${offset}] = getChar()`);
         break;
       case OUTPUT:
-        print(`writeChar([${offset}])`);
+        print(`writeChar(d[p+${offset}])`);
         break;
       case IF_ZERO_GOTO:
         print(`while (d[p] != 0) {`);

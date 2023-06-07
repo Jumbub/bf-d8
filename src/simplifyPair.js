@@ -10,6 +10,11 @@ const simplifyPair = (left, right) => {
     return [addFactory(leftOffset, leftValue + rightValue)];
   } else if (leftI === ADD && rightI === ADD && rightIsBaseOperation) {
     return [right, left];
+  } else if (leftI === ADD && rightI === SET && rightIsBaseOperation) {
+    // return [right, left];
+  } else if (leftI === ADD && rightI === SET && rightOffset === leftOffset) {
+    // sets after adds override if at the same offset
+    return [right];
   } else if (leftI === ADD && rightI === INPUT && leftOffset === rightOffset) {
     // input overrides mutation
     return [right];
@@ -28,6 +33,13 @@ const simplifyPair = (left, right) => {
   } else if (leftI === MOVE && rightI === ADD) {
     // prioritise mutations first, accumulating offsets to match operation outcomes
     return [addFactory(leftOffset + rightOffset, rightValue), moveFactory(leftOffset + rightOffset)];
+  } else if (leftI === MOVE && rightI === SET) {
+    // print(left);
+    // print(right);
+    // print(setFactory(leftOffset + rightOffset, rightValue));
+    // print(moveFactory(leftOffset + rightOffset));
+    // prioritise mutations first, accumulating offsets to match operation outcomes
+    // return [setFactory(leftOffset + rightOffset, rightValue), moveFactory(leftOffset + rightOffset)];
   } else if (leftI === MOVE && rightI === INPUT) {
     // prioritise mutations first, accumulating offsets to match operation outcomes
     return [inputFactory(leftOffset + rightOffset), moveFactory(leftOffset + rightOffset)];
@@ -46,6 +58,11 @@ const simplifyPair = (left, right) => {
   } else if (leftI === OUTPUT && rightI === ADD && rightIsBaseOperation) {
     return [right, left];
   } else if (leftI === OUTPUT && rightI === INPUT && rightIsBaseOperation) {
+    return [right, left];
+  } else if (leftI === SET && rightI === ADD && rightOffset === leftOffset) {
+    // combine a set followed by an add into a single set (for the same offset)
+    return [setFactory(rightOffset, leftValue + rightValue)];
+  } else if (leftI === SET && rightI === ADD && rightIsBaseOperation) {
     return [right, left];
   }
 

@@ -33,7 +33,7 @@ const simplifyLoop = allInstructions => {
     // COPY LOOP: `[->+<]`, `[->+>++<<]`, etc.
     // only run simplification after the pairs are simplified, i.e. only 1 zero offset add left
     const copyTo = nonZeroOffsets.map(([, offset, multiplyer]) => copyToFactory(offset, multiplyer / -firstValue));
-    // return [...copyTo, setFactory(0, 0)];
+    return [...copyTo, setFactory(0, 0)];
   } else if (nonBraceInstructions.every(([label]) => [INPUT, OUTPUT].includes(label))) {
     // WARNING: aggressive optimisation technique, assumes valid program with terminating loop, in which case, the only way to exit the loop is to mutate the pointer position or the data
     return [];
