@@ -16,6 +16,21 @@ const simplifyNodes = allNodes => {
         } else if (has(node.nodes) && node.nodes.length === 1 && has(node.nodes[0].move)) {
           // use 1 instruction to represent moving in a loop
           simple = [{ moveTilZero: node.nodes[0].move, offset: 0 }];
+        } else if (
+          has(node.nodes) &&
+          node.nodes.every(node => has(node.add)) &&
+          node.nodes.filter(node => node.offset === 0).length === 1
+        ) {
+          // simplify this "addTimes" loop into a set of sequential instructions
+          const base = node.nodes.find(node => node.offset === 0);
+          const rest = node.nodes.filter(node => node.offset !== 0);
+          simple = [
+            ...rest.map(node => ({
+              addTimes: { fromAdd: base.add, toAdd: node.add, toOffset: node.offset },
+              offset: 0,
+            })),
+            { set: 0, offset: 0 },
+          ];
         } else if (has(node.nodes)) {
           // recurse into loop, simplifying looping instructions in isolation
           const simplifiedNodes = simplifyNodes(node.nodes);

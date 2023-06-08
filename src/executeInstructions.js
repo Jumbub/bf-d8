@@ -33,14 +33,20 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
         data[dataI + offset] = value;
         break;
 
-      // case COPY_TO:
-      //   data[dataI + offset] += data[dataI] * value;
-      //   break;
-
       case MOVE_TIL_ZERO:
         while (data[dataI + offset]) {
           dataI += value;
         }
+        break;
+
+      case ADD_TIMES:
+        times = 0;
+        let number = data[dataI + offset];
+        while (number !== 0) {
+          times++;
+          number += value.fromAdd;
+        }
+        data[dataI + offset + value.toOffset] += value.toAdd * times;
         break;
 
       default:

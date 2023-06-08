@@ -8,7 +8,8 @@ const nodesToString = (nodes, depth = 0) => {
       let output = tab;
 
       const has = property => node[property] !== undefined;
-      const POINT_TO_DATA = `d[p${(offset = node.offset ? `${node.offset >= 0 ? '+' : ''}${node.offset}` : '')}]`;
+      const POINT_TO_DATA = `d[p${node.offset ? `${node.offset >= 0 ? '+' : ''}${node.offset}` : ''}]`;
+      const pointToData = offset => `d[p${offset ? `${offset >= 0 ? '+' : ''}${offset}` : ''}]`;
 
       // open brace
       if (has('nodes')) {
@@ -22,6 +23,11 @@ const nodesToString = (nodes, depth = 0) => {
       }
       if (has('set')) {
         output += `${POINT_TO_DATA} = ${node.set};`;
+      }
+      if (has('addTimes')) {
+        output += `${pointToData(node.offset + node.addTimes.toOffset)} += ${
+          node.addTimes.toAdd
+        } * times(${POINT_TO_DATA}, ${node.addTimes.fromAdd});`;
       }
       if (has('move')) {
         output += `p ${node.move < 0 ? '-' : '+'}= ${Math.abs(node.move)};`;
