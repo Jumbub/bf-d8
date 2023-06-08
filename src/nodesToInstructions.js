@@ -1,16 +1,19 @@
-// const ADD = 0;
-// const MOVE = 1;
-// const INPUT = 2;
-// const OUTPUT = 3;
-// const SKIP_IF_ZERO = 4;
-// const SKIP_IF_NOT_ZERO = 5;
+const ADD = 0;
+const MOVE = 1;
+const INPUT = 2;
+const OUTPUT = 3;
+const SKIP_IF_ZERO = 4;
+const SKIP_IF_NOT_ZERO = 5;
+const SET = 6;
+const MOVE_TIL_ZERO = 7;
 
-const ADD = 'ADD';
-const MOVE = 'MOVE';
-const INPUT = 'INPUT';
-const OUTPUT = 'OUTPUT';
-const SKIP_IF_ZERO = 'SKIP_IF_ZERO';
-const SKIP_IF_NOT_ZERO = 'SKIP_IF_NOT_ZERO';
+// const ADD = 'ADD';
+// const SET = 'SET';
+// const MOVE = 'MOVE';
+// const INPUT = 'INPUT';
+// const OUTPUT = 'OUTPUT';
+// const SKIP_IF_ZERO = 'SKIP_IF_ZERO';
+// const SKIP_IF_NOT_ZERO = 'SKIP_IF_NOT_ZERO';
 
 const nodesToInstructions = nodes => {
   return nodes.flatMap(node => {
@@ -25,6 +28,10 @@ const nodesToInstructions = nodes => {
       return [[INPUT, node.offset]];
     } else if (has(node.output)) {
       return [[OUTPUT, node.offset]];
+    } else if (has(node.set)) {
+      return [[SET, node.offset, node.set, node.nonTerminatingIfEven]];
+    } else if (has(node.moveTilZero)) {
+      return [[MOVE_TIL_ZERO, node.offset, node.moveTilZero]];
     }
     throw new Error(`Un-handled node [${JSON.stringify(node)}]`);
   });

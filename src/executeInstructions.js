@@ -2,10 +2,7 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
   let data = new DATA_TYPE(DATA_LENGTH);
   let dataI = 0;
   for (let tokenI = 0; tokenI < instructions.length; tokenI++) {
-    const [label, offset, value] = instructions[tokenI];
-    // print(dataI, data[dataI], label, offset, value);
-    // if (isNaN(dataI)) throw new Error('wtf');
-    // if (isNaN(data[dataI])) throw new Error('wtf');
+    const [label, offset, value, nonTerminatingIfEvent] = instructions[tokenI];
     switch (label) {
       case ADD:
         data[dataI + offset] += value;
@@ -31,19 +28,20 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
         if (data[dataI] !== 0) tokenI += offset;
         break;
 
-      // case SET:
-      //   data[dataI + offset] = value;
-      //   break;
+      case SET:
+        if (nonTerminatingIfEvent && data[dataI + offset] % 2 === 0) throw new Error('Non-terminating loop!');
+        data[dataI + offset] = value;
+        break;
 
       // case COPY_TO:
       //   data[dataI + offset] += data[dataI] * value;
       //   break;
 
-      // case MOVE_TIL_ZERO:
-      //   while (data[dataI]) {
-      //     dataI += offset;
-      //   }
-      //   break;
+      case MOVE_TIL_ZERO:
+        while (data[dataI + offset]) {
+          dataI += value;
+        }
+        break;
 
       default:
         throw new Error(`Unknown operator ${label}`);

@@ -4,27 +4,32 @@
 const nodesToString = (nodes, depth = 0) => {
   return nodes
     .map(node => {
-      const tab = '.\t'.repeat(depth);
+      const tab = '.\t'.repeat(depth + 1);
       let output = tab;
 
       const has = property => node[property] !== undefined;
-      const POINT_TO_DATA = `d[p${(offset = node.offset ? `+ ${node.offset}` : '')}]`;
+      const POINT_TO_DATA = `d[p${(offset = node.offset ? `${node.offset >= 0 ? '+' : ''}${node.offset}` : '')}]`;
 
       // open brace
       if (has('nodes')) {
-        if (has('ifNot')) output += `while (${POINT_TO_DATA} == 0) `;
-
-        output += `{\n${nodesToString(node.nodes, depth + 1)}`;
+        if (has('ifNot')) output += `while (${POINT_TO_DATA} != 0)`;
+        const looped = nodesToString(node.nodes, depth + 1);
+        output += `{\n${looped}\n${tab}}`;
       }
 
       if (has('add')) {
-        output += `${POINT_TO_DATA} ${node.add < 0 ? '-' : '+'}= ${node.add};`;
+        output += `${POINT_TO_DATA} ${node.add < 0 ? '-' : '+'}= ${Math.abs(node.add)};`;
       }
       if (has('set')) {
-        output += `${POINT_TO_DATA} = ${node.add};`;
+        output += `${POINT_TO_DATA} = ${node.set};`;
       }
       if (has('move')) {
-        output += `p ${node.move < 0 ? '-' : '+'}= ${node.move};`;
+        output += `p ${node.move < 0 ? '-' : '+'}= ${Math.abs(node.move)};`;
+      }
+      if (has('moveTilZero')) {
+        output += `while (${POINT_TO_DATA} != 0) { p ${node.moveTilZero < 0 ? '-' : '+'}= ${Math.abs(
+          node.moveTilZero,
+        )}; };`;
       }
 
       if (has('input')) {
@@ -35,9 +40,8 @@ const nodesToString = (nodes, depth = 0) => {
         output += `write(${POINT_TO_DATA});`;
       }
 
-      // close brace
-      if (has('nodes')) {
-        output += `\n${tab}}`;
+      if (has('info')) {
+        output += JSON.stringify(node.info);
       }
 
       return output;
