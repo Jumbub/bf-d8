@@ -57,21 +57,21 @@ export D8_PATH="~/repos/v8/v8/out/x64.release"
 ### Usage
 
 ```bash
-d8 src/execute-file.js -- <program.b>
+d8 src/run.js -- <program.b>
 ```
 
 Example programs can be found in the `tests` folder.
 
-E.g. `d8 src/execute-file.js -- tests/hello-world.b`
+E.g. `d8 src/run.js -- tests/hello-world.b`
 
 ### Tests
 
 ```bash
 # Single test
-d8 src/execute-file.js -- tests/hello-world.b > output.txt && diff output.txt tests/hello-world.b && echo Passed test! || echo Failed test!
+d8 src/run.js -- tests/hello-world.b > output.txt && diff output.txt tests/hello-world.b && echo Passed test! || echo Failed test!
 
 # Test suite
-find tests/*.b | grep -oP "(?<=/)[\-\w]+(?=.b)" | xargs -n 1 sh -c '<d8-executable-location> src/execute-file.js -- tests/$0.b > output.txt && diff output.txt tests/$0.txt && echo Passed $0 test! || echo Failed $0 test!'
+find tests/*.b | grep -oP "(?<=/)[\-\w]+(?=.b)" | xargs -n 1 sh -c '<d8-executable-location> src/run.js -- tests/$0.b > output.txt && diff output.txt tests/$0.txt && echo Passed $0 test! || echo Failed $0 test!'
 ```
 
 ## References
