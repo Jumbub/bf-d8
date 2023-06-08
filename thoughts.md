@@ -75,6 +75,21 @@ D8?
 </br>
 
 
+## JIT
+
+##### Is it worth optimising as we go, rather than upfront
+
+Pros:
+
+- can optimise based on current pointer and data values
+- can execute instructions while optimising in the background
+
+Cons:
+
+- optimisations being injected into instruction set will break control flow, potentially breaking/decreasing V8 optimisations
+- optimisations would be re-run many more times (or the complexity of which code to optimise would increase)
+
+
 ## Optimisations
 
 ##### Removal comments

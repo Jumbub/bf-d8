@@ -39,14 +39,19 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
         }
         break;
 
-      case ADD_TIMES:
+      case ADD_TIMES_THEN_SET:
+        // print('ADD_TIMES_THEN_SET', JSON.stringify(instructions[tokenI]));
+        // print('state', dataI, data[dataI], data[dataI + offset]);
         times = 0;
         let number = data[dataI + offset];
         while (number !== 0) {
           times++;
-          number += value.fromAdd;
+          number += value.divisor;
         }
-        data[dataI + offset + value.toOffset] += value.toAdd * times;
+        value.each.forEach(copy => {
+          data[dataI + offset + copy.offset] += times * copy.multiplyer;
+        });
+        data[dataI + offset] = value.set;
         break;
 
       default:

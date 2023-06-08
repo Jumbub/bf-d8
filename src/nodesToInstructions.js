@@ -6,7 +6,7 @@ const SKIP_IF_ZERO = 4;
 const SKIP_IF_NOT_ZERO = 5;
 const SET = 6;
 const MOVE_TIL_ZERO = 7;
-const ADD_TIMES = 8;
+const ADD_TIMES_THEN_SET = 8;
 
 // const ADD = 'ADD';
 // const SET = 'SET';
@@ -33,8 +33,8 @@ const nodesToInstructions = nodes => {
       return [[SET, node.offset, node.set, node.nonTerminatingIfEven]];
     } else if (has(node.moveTilZero)) {
       return [[MOVE_TIL_ZERO, node.offset, node.moveTilZero]];
-    } else if (has(node.addTimes)) {
-      return [[ADD_TIMES, node.offset, node.addTimes]];
+    } else if (has(node.addTimesThenSet)) {
+      return [[ADD_TIMES_THEN_SET, node.offset, node.addTimesThenSet]];
     }
     throw new Error(`Un-handled node [${JSON.stringify(node)}]`);
   });

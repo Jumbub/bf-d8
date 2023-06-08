@@ -24,10 +24,12 @@ const nodesToString = (nodes, depth = 0) => {
       if (has('set')) {
         output += `${POINT_TO_DATA} = ${node.set};`;
       }
-      if (has('addTimes')) {
-        output += `${pointToData(node.offset + node.addTimes.toOffset)} += ${
-          node.addTimes.toAdd
-        } * times(${POINT_TO_DATA}, ${node.addTimes.fromAdd});`;
+      if (has('addTimesThenSet')) {
+        output += `times = 1; while((${POINT_TO_DATA} += ${node.addTimesThenSet.divisor}) != 0) {times++}; `;
+        output += node.addTimesThenSet.each
+          .map(item => `${pointToData(node.offset + item.offset)} = times * ${item.multiplyer};`)
+          .join(`; `);
+        output += ` ${POINT_TO_DATA} = ${node.addTimesThenSet.set};`;
       }
       if (has('move')) {
         output += `p ${node.move < 0 ? '-' : '+'}= ${Math.abs(node.move)};`;

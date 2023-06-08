@@ -21,16 +21,23 @@ const simplifyNodes = allNodes => {
           node.nodes.every(node => has(node.add)) &&
           node.nodes.filter(node => node.offset === 0).length === 1
         ) {
-          // simplify this "addTimes" loop into a set of sequential instructions
+          // simplify this "addTimesThenSet" loop into a set of sequential instructions
           const base = node.nodes.find(node => node.offset === 0);
           const rest = node.nodes.filter(node => node.offset !== 0);
           simple = [
-            ...rest.map(node => ({
-              addTimes: { fromAdd: base.add, toAdd: node.add, toOffset: node.offset },
+            {
+              addTimesThenSet: {
+                each: rest.map(node => ({
+                  multiplyer: node.add,
+                  offset: node.offset,
+                })),
+                divisor: base.add,
+                set: 0, // after addition
+              },
               offset: 0,
-            })),
-            { set: 0, offset: 0 },
+            },
           ];
+          simple = undefined;
         } else if (has(node.nodes)) {
           // recurse into loop, simplifying looping instructions in isolation
           const simplifiedNodes = simplifyNodes(node.nodes);
@@ -55,8 +62,7 @@ const simplifyNodes = allNodes => {
           simple = [{ move: left.move + right.move }];
         } else if (has(left.move) && has(right.offset)) {
           // accumulate pointer movements as operation offsets
-          // WARNING: does not work with bitshift.b FRIGGGG
-          // simple = [{ ...right, offset: left.move + right.offset }, { move: left.move + right.offset }];
+          simple = [{ ...right, offset: left.move + right.offset }, { move: left.move + right.offset }];
         } else if (has(left.set) && has(right.add) && left.offset === right.offset) {
           // assignment followed by addition, simplified to single assignment
           simple = [{ set: left.set + right.add, offset: left.offset }];
