@@ -38,7 +38,7 @@ Benchmarking run on `tests/mandelbrot.b`
 
 > 1.5% increase in performance
 
-##### Replace copy loops with fixed operation
+##### Replace loops which mutate variable based on another variable with fixed operations
 
 > 15% performance decrease!!!
 
