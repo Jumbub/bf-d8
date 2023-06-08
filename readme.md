@@ -26,11 +26,11 @@ Benchmarking run on `tests/mandelbrot.b`
 
 > bout 400% increase in performance (from slightly more lazy undefined value checking than above)
 
-##### Aliasing the reset value loop `[add]`
+##### Aliasing the reset value loop `[-]`
 
 > 2% increase in performance
 
-##### Aliasing the "move til zero" loop `[move]`
+##### Aliasing the "move til zero" loop `[>]`
 
 > 50% increase in performance
 
@@ -41,6 +41,10 @@ Benchmarking run on `tests/mandelbrot.b`
 ##### Replace loops which mutate variable based on another variable with fixed operations
 
 > 15% performance decrease!!!
+
+##### Merge assignment followed by addition into single assignment
+
+> 2% increase in performance
 
 ## Setup
 

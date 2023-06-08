@@ -55,7 +55,11 @@ const simplifyNodes = allNodes => {
           simple = [{ move: left.move + right.move }];
         } else if (has(left.move) && has(right.offset)) {
           // accumulate pointer movements as operation offsets
-          simple = [{ ...right, offset: left.move + right.offset }, { move: left.move + right.offset }];
+          // WARNING: does not work with bitshift.b FRIGGGG
+          // simple = [{ ...right, offset: left.move + right.offset }, { move: left.move + right.offset }];
+        } else if (has(left.set) && has(right.add) && left.offset === right.offset) {
+          // assignment followed by addition, simplified to single assignment
+          simple = [{ set: left.set + right.add, offset: left.offset }];
         }
       }
 
