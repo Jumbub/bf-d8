@@ -1,6 +1,8 @@
 const has = property => property !== undefined;
 
 const simplifyNodes = allNodes => {
+  return allNodes;
+
   for (let size = 1; size <= allNodes.length; size++) {
     for (let offset = 0; offset <= allNodes.length - size; offset++) {
       const nodes = allNodes.slice(offset, offset + size);
@@ -9,39 +11,19 @@ const simplifyNodes = allNodes => {
       if (nodes.length === 1) {
         const [node] = nodes;
 
-        if (has(node.nodes) && node.nodes.length === 1 && has(node.nodes[0].add)) {
+        if (has(node.whileNotZero) && node.whileNotZero.length === 1 && has(node.whileNotZero[0].add)) {
           // for this loop to exit, the data must be 0
           // (note: if the current data value is odd, and the add value is even, this loop never terminates)
-          simple = [{ set: 0, offset: node.nodes[0].offset, nonTerminatingIfEven: !(node.nodes[0].add % 2) }];
-        } else if (has(node.nodes) && node.nodes.length === 1 && has(node.nodes[0].move)) {
-          // use 1 instruction to represent moving in a loop
-          simple = [{ moveTilZero: node.nodes[0].move, offset: 0 }];
-        } else if (
-          has(node.nodes) &&
-          node.nodes.every(node => has(node.add)) &&
-          node.nodes.filter(node => node.offset === 0).length === 1
-        ) {
-          // simplify this "addTimesThenSet" loop into a set of sequential instructions
-          const base = node.nodes.find(node => node.offset === 0);
-          const rest = node.nodes.filter(node => node.offset !== 0);
           simple = [
-            {
-              addTimesThenSet: {
-                each: rest.map(node => ({
-                  multiplyer: node.add,
-                  offset: node.offset,
-                })),
-                divisor: base.add,
-                set: 0, // after addition
-              },
-              offset: 0,
-            },
+            { set: 0, offset: node.whileNotZero[0].offset, nonTerminatingIfEven: !(node.whileNotZero[0].add % 2) },
           ];
-          simple = undefined;
-        } else if (has(node.nodes)) {
+        } else if (has(node.whileNotZero) && node.whileNotZero.length === 1 && has(node.whileNotZero[0].move)) {
+          // use 1 instruction to represent moving in a loop
+          simple = [{ whileNotZeroMove: node.whileNotZero[0].move, offset: 0 }];
+        } else if (has(node.whileNotZero)) {
           // recurse into loop, simplifying looping instructions in isolation
-          const simplifiedNodes = simplifyNodes(node.nodes);
-          if (simplifiedNodes !== node.nodes) simple = [{ ...node, nodes: simplifiedNodes }];
+          const simplifiedNodes = simplifyNodes(node.whileNotZero);
+          if (simplifiedNodes !== node.whileNotZero) simple = [{ ...node, whileNotZero: simplifiedNodes }];
         } else if (node.add === 0) {
           // remove noop adds
           simple = [];

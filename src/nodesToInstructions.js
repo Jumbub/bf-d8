@@ -16,11 +16,15 @@ const ADD_TIMES_THEN_SET = 8;
 // const SKIP_IF_ZERO = 'SKIP_IF_ZERO';
 // const SKIP_IF_NOT_ZERO = 'SKIP_IF_NOT_ZERO';
 
-const nodesToInstructions = nodes => {
-  return nodes.flatMap(node => {
-    if (has(node.nodes)) {
-      const instructions = nodesToInstructions(node.nodes);
-      return [[SKIP_IF_ZERO, instructions.length], ...instructions, [SKIP_IF_NOT_ZERO, -instructions.length - 1]];
+const nodesToInstructions = nodes =>
+  nodes.flatMap(node => {
+    if (has(node.whileNotZero)) {
+      const instructions = nodesToInstructions(node.whileNotZero);
+      return [
+        [SKIP_IF_ZERO, instructions.length + node.offset],
+        ...instructions,
+        [SKIP_IF_NOT_ZERO, -instructions.length - 1 + node.offset],
+      ];
     } else if (has(node.add)) {
       return [[ADD, node.offset, node.add]];
     } else if (has(node.move)) {
@@ -31,11 +35,8 @@ const nodesToInstructions = nodes => {
       return [[OUTPUT, node.offset]];
     } else if (has(node.set)) {
       return [[SET, node.offset, node.set, node.nonTerminatingIfEven]];
-    } else if (has(node.moveTilZero)) {
-      return [[MOVE_TIL_ZERO, node.offset, node.moveTilZero]];
-    } else if (has(node.addTimesThenSet)) {
-      return [[ADD_TIMES_THEN_SET, node.offset, node.addTimesThenSet]];
+    } else if (has(node.whileNotZeroMove)) {
+      return [[MOVE_TIL_ZERO, node.offset, node.whileNotZeroMove]];
     }
     throw new Error(`Un-handled node [${JSON.stringify(node)}]`);
   });
-};

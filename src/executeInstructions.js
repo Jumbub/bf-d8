@@ -17,7 +17,8 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
         break;
 
       case INPUT:
-        data[dataI + offset] = readline().charCodeAt(0);
+        // note: readline returns undefined in non-interactive environments
+        data[dataI + offset] = (readline() ?? '').charCodeAt(0);
         break;
 
       case SKIP_IF_ZERO:
@@ -28,34 +29,19 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
         if (data[dataI] !== 0) tokenI += offset;
         break;
 
-      case SET:
-        if (nonTerminatingIfEvent && data[dataI + offset] % 2 === 0) throw new Error('Non-terminating loop!');
-        data[dataI + offset] = value;
-        break;
+      // case SET:
+      //   if (nonTerminatingIfEvent && data[dataI + offset] % 2 === 0) throw new Error('Non-terminating loop!');
+      //   data[dataI + offset] = value;
+      //   break;
 
-      case MOVE_TIL_ZERO:
-        while (data[dataI + offset]) {
-          dataI += value;
-        }
-        break;
-
-      case ADD_TIMES_THEN_SET:
-        // print('ADD_TIMES_THEN_SET', JSON.stringify(instructions[tokenI]));
-        // print('state', dataI, data[dataI], data[dataI + offset]);
-        times = 0;
-        let number = data[dataI + offset];
-        while (number !== 0) {
-          times++;
-          number += value.divisor;
-        }
-        value.each.forEach(copy => {
-          data[dataI + offset + copy.offset] += times * copy.multiplyer;
-        });
-        data[dataI + offset] = value.set;
-        break;
+      // case MOVE_TIL_ZERO:
+      //   while (data[dataI + offset]) {
+      //     dataI += value;
+      //   }
+      //   break;
 
       default:
-        throw new Error(`Unknown operator ${label}`);
+        throw new Error(`Unknown instruction: ${JSON.stringify(instructions[tokenI])}`);
     }
   }
 };

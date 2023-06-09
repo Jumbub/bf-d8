@@ -1,6 +1,5 @@
 /** @typedef {{
  *     nodes?: Node[];
- *     ifNot?: boolean;
  *     move?: number;
  *     add?: number;
  *     set?: number;
@@ -23,8 +22,8 @@ const tokensToNodes = tokens =>
 
         case ']':
           const loop = {
-            nodes: allGroups.pop(),
-            ifNot: 0,
+            whileNotZero: allGroups.pop(),
+            offset: 0,
           };
 
           const newCurrentGroup = allGroups.pop();
