@@ -4,7 +4,7 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
   let data = new DATA_TYPE(DATA_LENGTH);
   let dataI = 0;
   for (let tokenI = 0; tokenI < instructions.length; tokenI++) {
-    const [label, offset, value, nonTerminatingIfEven] = instructions[tokenI];
+    const [label, offset, value] = instructions[tokenI];
 
     // debugInstructionsWarningStatefulFunction(data, dataI, instructions[tokenI]);
 
@@ -35,7 +35,7 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
         break;
 
       case SET:
-        if (nonTerminatingIfEven && data[dataI + offset] % 2 === 0) throw new Error('Non-terminating loop!');
+        if (instructions[tokenI][3] && data[dataI + offset] % 2 === 0) throw new Error('Non-terminating loop!');
         data[dataI + offset] = value;
         break;
 
