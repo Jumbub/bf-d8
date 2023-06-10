@@ -22,6 +22,7 @@ const simplifyNodes = allNodes => {
           // [>] => (move 1 while not zero)
           simple = [{ offset: node.offset, moveWhileNotZero: node.whileNotZero[0].move }];
         } else if (
+          false &&
           node.whileNotZero?.filter(inner => inner.add === undefined).length == 0 &&
           node.whileNotZero?.filter(inner => inner.add !== undefined).length >= 2 &&
           node.whileNotZero?.filter(inner => inner.offset === 0).length == 1

@@ -10,14 +10,14 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
     const value = instructions[instructionI][2];
 
     switch (instructions[instructionI][0]) {
-      case ADD_WHILE_NOT_ZERO:
-        while (data[dataI + offset] !== 0) {
-          data[dataI + offset] += value.from.add;
-          value.to.forEach(inner => {
-            data[dataI + offset + inner.offset] += inner.add;
-          });
-        }
-        break;
+      // case ADD_WHILE_NOT_ZERO:
+      //   while (data[dataI + offset] !== 0) {
+      //     data[dataI + offset] += value.from.add;
+      //     value.to.forEach(inner => {
+      //       data[dataI + offset + inner.offset] += inner.add;
+      //     });
+      //   }
+      //   break;
 
       case GOTO_IF_NOT_ZERO:
         if (data[dataI + offset] !== 0) instructionI += value;
