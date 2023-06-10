@@ -8,13 +8,42 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
 
     const offset = instructions[instructionI][1];
     const value = instructions[instructionI][2];
+
     switch (instructions[instructionI][0]) {
-      case ADD:
-        data[dataI + offset] += value;
+      case ADD_WHILE_NOT_ZERO:
+        while (data[dataI + offset] !== 0) {
+          data[dataI + offset] += value.from.add;
+          value.to.forEach(inner => {
+            data[dataI + offset + inner.offset] += inner.add;
+          });
+        }
+        break;
+
+      case GOTO_IF_NOT_ZERO:
+        if (data[dataI + offset] !== 0) instructionI += value;
         break;
 
       case MOVE:
         dataI += value;
+        break;
+
+      case ADD:
+        data[dataI + offset] += value;
+        break;
+
+      case SET:
+        if (instructions[instructionI][3] && data[dataI + offset] % 2 === 0) throw new Error('Non-terminating loop!');
+        data[dataI + offset] = value;
+        break;
+
+      case GOTO_IF_ZERO:
+        if (data[dataI + offset] === 0) instructionI += value;
+        break;
+
+      case MOVE_WHILE_NOT_ZERO:
+        while (data[dataI + offset] !== 0) {
+          dataI += value;
+        }
         break;
 
       case OUTPUT:
@@ -24,34 +53,6 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
       case INPUT:
         // note: readline returns undefined in non-interactive environments
         data[dataI + offset] = (readline() ?? '').charCodeAt(0);
-        break;
-
-      case GOTO_IF_ZERO:
-        if (data[dataI + offset] === 0) instructionI += value;
-        break;
-
-      case GOTO_IF_NOT_ZERO:
-        if (data[dataI + offset] !== 0) instructionI += value;
-        break;
-
-      case SET:
-        if (instructions[instructionI][3] && data[dataI + offset] % 2 === 0) throw new Error('Non-terminating loop!');
-        data[dataI + offset] = value;
-        break;
-
-      case MOVE_WHILE_NOT_ZERO:
-        while (data[dataI + offset] !== 0) {
-          dataI += value;
-        }
-        break;
-
-      case ADD_WHILE_NOT_ZERO:
-        while (data[dataI + offset] !== 0) {
-          data[dataI + offset] += value.from.add;
-          value.to.forEach(inner => {
-            data[dataI + offset + inner.offset] += inner.add;
-          });
-        }
         break;
 
       default:
