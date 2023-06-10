@@ -20,7 +20,7 @@ const nodes = tokensToNodes(tokens);
 const simplifiedNodes = simplifyNodes(nodes);
 // print(`SIMPLIFIED: ${JSON.stringify(simplifiedNodes)}\n`);
 
-print(`PROGRAM:\n${nodesToString(simplifiedNodes, 0)}\n`);
+// print(`PROGRAM:\n${nodesToString(simplifiedNodes, 0)}\n`);
 
 const instructions = nodesToInstructions(simplifiedNodes);
 
@@ -30,4 +30,4 @@ print(`starting execution ${performance.now()}ms`);
 executeInstructions(instructions, bitSize === 8 ? Uint8Array : bitSize === 16 ? Uint16Array : Uint32Array, memorySize);
 print(`finished execution ${performance.now()}ms`);
 
-writeFile('../working', nodesToString(simplifiedNodes, 0));
+// writeFile('../working', nodesToString(simplifiedNodes, 0));
