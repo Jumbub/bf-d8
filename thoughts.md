@@ -29,6 +29,15 @@ Also has implicit array storage as an array is represented as just an ordered se
 
 #### Runtime
 
+##### Memory bounds checking
+
+Note this information from the 3rd test in this file [test.b](http://brainfuck.org/tests.b).
+
+> In a low-level implementation you can get bounds checking
+for free by using the OS's own memory protections; this is the best
+solution, which may require making the array size a multiple of the page
+size.
+
 ##### Single operation representation
 
 > operations have meta-data to simplify representation

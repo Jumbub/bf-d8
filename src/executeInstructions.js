@@ -2,14 +2,14 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
   let data = new DATA_TYPE(DATA_LENGTH);
   let dataI = 0;
   for (let tokenI = 0; tokenI < instructions.length; tokenI++) {
-    const [label, offset, value, nonTerminatingIfEvent] = instructions[tokenI];
+    const [label, offset, value, nonTerminatingIfEven] = instructions[tokenI];
     switch (label) {
       case ADD:
         data[dataI + offset] += value;
         break;
 
       case MOVE:
-        dataI += offset;
+        dataI += value;
         break;
 
       case OUTPUT:
@@ -21,24 +21,33 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
         data[dataI + offset] = (readline() ?? '').charCodeAt(0);
         break;
 
-      case SKIP_IF_ZERO:
-        if (data[dataI] === 0) tokenI += offset;
+      case GOTO_IF_ZERO:
+        if (data[dataI + offset] === 0) tokenI += value;
         break;
 
-      case SKIP_IF_NOT_ZERO:
-        if (data[dataI] !== 0) tokenI += offset;
+      case GOTO_IF_NOT_ZERO:
+        if (data[dataI + offset] !== 0) tokenI += value;
         break;
 
-      // case SET:
-      //   if (nonTerminatingIfEvent && data[dataI + offset] % 2 === 0) throw new Error('Non-terminating loop!');
-      //   data[dataI + offset] = value;
-      //   break;
+      case SET:
+        if (nonTerminatingIfEven && data[dataI + offset] % 2 === 0) throw new Error('Non-terminating loop!');
+        data[dataI + offset] = value;
+        break;
 
-      // case MOVE_TIL_ZERO:
-      //   while (data[dataI + offset]) {
-      //     dataI += value;
-      //   }
-      //   break;
+      case MOVE_WHILE_NOT_ZERO:
+        while (data[dataI + offset] !== 0) {
+          dataI += value;
+        }
+        break;
+
+      case ADD_WHILE_NOT_ZERO:
+        while (data[dataI + offset] !== 0) {
+          data[dataI + offset] += value.from.add;
+          value.to.forEach(node => {
+            data[dataI + offset + node.offset] += node.add;
+          });
+        }
+        break;
 
       default:
         throw new Error(`Unknown instruction: ${JSON.stringify(instructions[tokenI])}`);

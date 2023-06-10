@@ -91,3 +91,4 @@ find tests/*.b | grep -oP "(?<=/)[\-\w]+(?=.b)" | xargs -n 1 sh -c '<d8-executab
 - [Very fast interpreters, transpilers and programs](https://github.com/rdebath/Brainfuck)
 - [Great intro into BF](https://gist.github.com/roachhd/dce54bec8ba55fb17d3a)
 - [Optimizing brainfuck compiler](https://www.nayuki.io/page/optimizing-brainfuck-compiler)
+- [Test programs](http://brainfuck.org/tests.b)

@@ -1,8 +1,6 @@
 const has = property => property !== undefined;
 
 const simplifyNodes = allNodes => {
-  return allNodes;
-
   for (let size = 1; size <= allNodes.length; size++) {
     for (let offset = 0; offset <= allNodes.length - size; offset++) {
       const nodes = allNodes.slice(offset, offset + size);
@@ -11,42 +9,57 @@ const simplifyNodes = allNodes => {
       if (nodes.length === 1) {
         const [node] = nodes;
 
-        if (has(node.whileNotZero) && node.whileNotZero.length === 1 && has(node.whileNotZero[0].add)) {
-          // for this loop to exit, the data must be 0
-          // (note: if the current data value is odd, and the add value is even, this loop never terminates)
-          simple = [
-            { set: 0, offset: node.whileNotZero[0].offset, nonTerminatingIfEven: !(node.whileNotZero[0].add % 2) },
-          ];
-        } else if (has(node.whileNotZero) && node.whileNotZero.length === 1 && has(node.whileNotZero[0].move)) {
-          // use 1 instruction to represent moving in a loop
-          simple = [{ whileNotZeroMove: node.whileNotZero[0].move, offset: 0 }];
-        } else if (has(node.whileNotZero)) {
-          // recurse into loop, simplifying looping instructions in isolation
-          const simplifiedNodes = simplifyNodes(node.whileNotZero);
-          if (simplifiedNodes !== node.whileNotZero) simple = [{ ...node, whileNotZero: simplifiedNodes }];
+        if (node.move === 0) {
+          // >< => nothing
+          simple = [];
         } else if (node.add === 0) {
-          // remove noop adds
+          // +- => nothing
           simple = [];
-        } else if (node.move === 0) {
-          // remove noop moves
+        } else if (node.whileNotZero?.length === 0) {
+          // [] => nothing
           simple = [];
+        } else if (node.whileNotZero?.length === 1 && node.whileNotZero[0].move) {
+          // [>] => (move 1 while not zero)
+          simple = [{ offset: node.offset, moveWhileNotZero: node.whileNotZero[0].move }];
+        } else if (
+          node.whileNotZero?.filter(inner => inner.add === undefined).length == 0 &&
+          node.whileNotZero?.filter(inner => inner.add !== undefined).length >= 2 &&
+          node.whileNotZero?.filter(inner => inner.offset === 0).length == 1
+        ) {
+          // [-->+>++] (while A not zero (add -2 to A; add +1 to B; add +2 to B))
+          simple = [
+            {
+              addWhileNotZero: {
+                from: node.whileNotZero.find(inner => inner.offset === 0),
+                to: node.whileNotZero.filter(inner => inner.offset !== 0),
+              },
+              offset: node.offset,
+            },
+          ];
+        } else if (node.whileNotZero?.length === 1 && node.whileNotZero[0].add) {
+          // [-] => (set to 0)
+          // Technically this could break non-terminating apps, so store a non-termination check.
+          const inner = node.whileNotZero[0];
+          simple = [{ set: 0, offset: inner.offset, nonTerminatingIfEven: !inner.add }];
+        } else if (node.whileNotZero) {
+          // [...] => [(simplified ...)]
+          const simplified = simplifyNodes(node.whileNotZero);
+          if (simplified !== node.whileNotZero) simple = [{ offset: node.offset, whileNotZero: simplified }];
         }
-      }
-
-      if (nodes.length === 2) {
+      } else if (nodes.length === 2) {
         const [left, right] = nodes;
 
-        if (has(left.add) && has(right.add) && left.offset === right.offset) {
-          // accumulate adds
-          simple = [{ add: left.add + right.add, offset: left.offset }];
-        } else if (has(left.move) && has(right.move)) {
-          // accumulate moves
+        if (left.add && right.add && left.offset === right.offset) {
+          // +- => (add 1-1)
+          simple = [{ offset: left.offset, add: left.add + right.add }];
+        } else if (left.move && right.move) {
+          // >< => (move 1-1)
           simple = [{ move: left.move + right.move }];
-        } else if (has(left.move) && has(right.offset)) {
-          // accumulate pointer movements as operation offsets
+        } else if (left.move && right.offset !== undefined) {
+          // >+ => (add 1 offset 1),(move 1)
           simple = [{ ...right, offset: left.move + right.offset }, { move: left.move + right.offset }];
-        } else if (has(left.set) && has(right.add) && left.offset === right.offset) {
-          // assignment followed by addition, simplified to single assignment
+        } else if (left.set !== undefined && right.add !== undefined && left.offset === right.offset) {
+          // (set 1)(add 2) => (set 3)
           simple = [{ set: left.set + right.add, offset: left.offset }];
         }
       }

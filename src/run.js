@@ -21,7 +21,6 @@ const simplifiedNodes = simplifyNodes(nodes);
 // print(`SIMPLIFIED: ${JSON.stringify(simplifiedNodes)}\n`);
 
 print(`PROGRAM:\n${nodesToString(simplifiedNodes, 0)}\n`);
-// writeFile('working', nodesToString(simplifiedNodes, 0));
 
 const instructions = nodesToInstructions(simplifiedNodes);
 
@@ -34,3 +33,5 @@ executeInstructions(
   memorySize,
 );
 print(`finished execution ${performance.now()}ms`);
+
+writeFile('../working', nodesToString(simplifiedNodes, 0));

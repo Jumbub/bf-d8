@@ -2,41 +2,45 @@ const ADD = 0;
 const MOVE = 1;
 const INPUT = 2;
 const OUTPUT = 3;
-const SKIP_IF_ZERO = 4;
-const SKIP_IF_NOT_ZERO = 5;
+const GOTO_IF_ZERO = 4;
+const GOTO_IF_NOT_ZERO = 5;
 const SET = 6;
-const MOVE_TIL_ZERO = 7;
-const ADD_TIMES_THEN_SET = 8;
+const MOVE_WHILE_NOT_ZERO = 7;
+const ADD_WHILE_NOT_ZERO = 8;
 
 // const ADD = 'ADD';
-// const SET = 'SET';
 // const MOVE = 'MOVE';
 // const INPUT = 'INPUT';
 // const OUTPUT = 'OUTPUT';
-// const SKIP_IF_ZERO = 'SKIP_IF_ZERO';
-// const SKIP_IF_NOT_ZERO = 'SKIP_IF_NOT_ZERO';
+// const GOTO_IF_ZERO = 'GOTO_IF_ZERO';
+// const GOTO_IF_NOT_ZERO = 'GOTO_IF_NOT_ZERO';
+// const SET = 'SET';
+// const MOVE_WHILE_NOT_ZERO = 'MOVE_WHILE_NOT_ZERO';
 
-const nodesToInstructions = nodes =>
+const nodesToInstructions = (nodes, accumulatedOffset = 0) =>
   nodes.flatMap(node => {
+    const trueOffset = node.offset + accumulatedOffset;
     if (has(node.whileNotZero)) {
-      const instructions = nodesToInstructions(node.whileNotZero);
+      const instructions = nodesToInstructions(node.whileNotZero, trueOffset);
       return [
-        [SKIP_IF_ZERO, instructions.length + node.offset],
+        [GOTO_IF_ZERO, trueOffset, instructions.length],
         ...instructions,
-        [SKIP_IF_NOT_ZERO, -instructions.length - 1 + node.offset],
+        [GOTO_IF_NOT_ZERO, trueOffset, -instructions.length - 1],
       ];
     } else if (has(node.add)) {
-      return [[ADD, node.offset, node.add]];
+      return [[ADD, trueOffset, node.add]];
     } else if (has(node.move)) {
-      return [[MOVE, node.move]];
+      return [[MOVE, null, node.move]];
     } else if (has(node.input)) {
-      return [[INPUT, node.offset]];
+      return [[INPUT, trueOffset]];
     } else if (has(node.output)) {
-      return [[OUTPUT, node.offset]];
+      return [[OUTPUT, trueOffset]];
     } else if (has(node.set)) {
-      return [[SET, node.offset, node.set, node.nonTerminatingIfEven]];
-    } else if (has(node.whileNotZeroMove)) {
-      return [[MOVE_TIL_ZERO, node.offset, node.whileNotZeroMove]];
+      return [[SET, trueOffset, node.set, node.nonTerminatingIfEven]];
+    } else if (has(node.moveWhileNotZero)) {
+      return [[MOVE_WHILE_NOT_ZERO, trueOffset, node.moveWhileNotZero]];
+    } else if (has(node.addWhileNotZero)) {
+      return [[ADD_WHILE_NOT_ZERO, trueOffset, node.addWhileNotZero]];
     }
     throw new Error(`Un-handled node [${JSON.stringify(node)}]`);
   });
