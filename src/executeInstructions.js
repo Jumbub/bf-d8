@@ -3,24 +3,15 @@ load('./src/debugInstructions.js');
 const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
   let data = new DATA_TYPE(DATA_LENGTH);
   let dataI = 0;
-  for (let instructionI = 0; instructionI < instructions.length; instructionI++) {
+  for (let instructionI = 0; instructionI < instructions.length; instructionI += 4) {
     // debugInstructionsWarningStatefulFunction(data, dataI, instructions[instructionI]);
 
-    const offset = instructions[instructionI][1];
-    const value = instructions[instructionI][2];
+    const offset = instructions[instructionI + 1];
+    const value = instructions[instructionI + 2];
 
-    switch (instructions[instructionI][0]) {
-      // case ADD_WHILE_NOT_ZERO:
-      //   while (data[dataI + offset] !== 0) {
-      //     data[dataI + offset] += value.from.add;
-      //     value.to.forEach(inner => {
-      //       data[dataI + offset + inner.offset] += inner.add;
-      //     });
-      //   }
-      //   break;
-
+    switch (instructions[instructionI]) {
       case GOTO_IF_NOT_ZERO:
-        if (data[dataI + offset] !== 0) instructionI += value;
+        if (data[dataI + offset] !== 0) instructionI += value * 4;
         break;
 
       case MOVE:
@@ -32,12 +23,12 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
         break;
 
       case SET:
-        if (instructions[instructionI][3] && data[dataI + offset] % 2 === 0) throw new Error('Non-terminating loop!');
+        if (instructions[instructionI + 3] && data[dataI + offset] % 2 === 0) throw new Error('Non-terminating loop!');
         data[dataI + offset] = value;
         break;
 
       case GOTO_IF_ZERO:
-        if (data[dataI + offset] === 0) instructionI += value;
+        if (data[dataI + offset] === 0) instructionI += value * 4;
         break;
 
       case MOVE_WHILE_NOT_ZERO:
