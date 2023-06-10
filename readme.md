@@ -46,6 +46,13 @@ Benchmarking run on `tests/mandelbrot.b`
 
 > 2% increase in performance
 
+##### Fast array value referencing
+
+949bdad7738fd3a42596220ecc42f167b61d45ff
+e92bcd81c5d92d642b292f031b616cd0873c2f82
+288f671e922eaebf0aa27b2ce2300fcff0f8685d
+also note that creating a common `const terminateIfEven = instructions[instructionI][3]` variable caused a 2.5% slow down.
+
 ## Setup
 
 - [Build V8](https://v8.dev/docs/build)
