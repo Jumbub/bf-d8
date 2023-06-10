@@ -30,7 +30,7 @@ const nodesToInstructions = (nodes, accumulatedOffset = 0) =>
     } else if (has(node.add)) {
       return [[ADD, trueOffset, node.add]];
     } else if (has(node.move)) {
-      return [[MOVE, null, node.move]];
+      return [[MOVE, 0, node.move]];
     } else if (has(node.input)) {
       return [[INPUT, trueOffset]];
     } else if (has(node.output)) {
