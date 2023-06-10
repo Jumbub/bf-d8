@@ -1,4 +1,4 @@
-[ credit: https://github.com/rdebath/Brainfuck/blob/master/bitwidth.b]
+[ credit: https://github.com/rdebath/Brainfuck/blob/master/bitwidth.b ]
 
 [
     This routine is a demonstration of checking for the three cell sizes

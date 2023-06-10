@@ -23,7 +23,7 @@ const nodesToInstructions = (nodes, accumulatedOffset = 0) =>
     if (has(node.whileNotZero)) {
       const instructions = nodesToInstructions(node.whileNotZero, trueOffset);
       return [
-        [GOTO_IF_ZERO, trueOffset, instructions.length],
+        [GOTO_IF_ZERO, trueOffset, instructions.length + 1],
         ...instructions,
         [GOTO_IF_NOT_ZERO, trueOffset, -instructions.length - 1],
       ];

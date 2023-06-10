@@ -27,11 +27,7 @@ const instructions = nodesToInstructions(simplifiedNodes);
 // print(`INSTRUCTIONS:\n${instructions}\n`);
 
 print(`starting execution ${performance.now()}ms`);
-executeInstructions(
-  instructions,
-  bitSize === 8 ? Uint8Array : bitSize === 16 ? Uint16Array : bitSize === 32 ? Uint32Array : BigUint64Array,
-  memorySize,
-);
+executeInstructions(instructions, bitSize === 8 ? Uint8Array : bitSize === 16 ? Uint16Array : Uint32Array, memorySize);
 print(`finished execution ${performance.now()}ms`);
 
 writeFile('../working', nodesToString(simplifiedNodes, 0));
