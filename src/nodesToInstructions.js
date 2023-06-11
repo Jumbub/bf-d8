@@ -9,15 +9,6 @@ const SET_UNLESS_EVEN = 7;
 const MOVE_WHILE_NOT_ZERO = 8;
 const ADD_WHILE_NOT_ZERO = 9;
 
-// const ADD = 'ADD';
-// const MOVE = 'MOVE';
-// const INPUT = 'INPUT';
-// const OUTPUT = 'OUTPUT';
-// const GOTO_IF_ZERO = 'GOTO_IF_ZERO';
-// const GOTO_IF_NOT_ZERO = 'GOTO_IF_NOT_ZERO';
-// const SET = 'SET';
-// const MOVE_WHILE_NOT_ZERO = 'MOVE_WHILE_NOT_ZERO';
-
 const INSTRUCTION_BYTES = 3;
 const nodesToInstructions = nodes => {
   const ins = nodesToInstructionsRecursive(nodes, 0);
