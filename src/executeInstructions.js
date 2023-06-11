@@ -3,7 +3,7 @@ load('./src/debugInstructions.js');
 const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
   let data = new DATA_TYPE(DATA_LENGTH);
   let dataI = 0;
-  for (let instructionI = 0; instructionI < instructions.length; instructionI += 4) {
+  for (let instructionI = 0; instructionI < instructions.length; instructionI += INSTRUCTION_BYTES) {
     // debugInstructionsWarningStatefulFunction(data, dataI, instructions[instructionI]);
 
     const offset = instructions[instructionI + 1];
@@ -11,7 +11,7 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
 
     switch (instructions[instructionI]) {
       case GOTO_IF_NOT_ZERO:
-        if (data[dataI + offset] !== 0) instructionI += value * 4;
+        if (data[dataI + offset] !== 0) instructionI += value * INSTRUCTION_BYTES;
         break;
 
       case MOVE:
@@ -23,12 +23,11 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
         break;
 
       case SET:
-        if (instructions[instructionI + 3] && data[dataI + offset] % 2 === 0) throw new Error('Non-terminating loop!');
         data[dataI + offset] = value;
         break;
 
       case GOTO_IF_ZERO:
-        if (data[dataI + offset] === 0) instructionI += value * 4;
+        if (data[dataI + offset] === 0) instructionI += value * INSTRUCTION_BYTES;
         break;
 
       case MOVE_WHILE_NOT_ZERO:
@@ -39,6 +38,11 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
 
       case OUTPUT:
         write(String.fromCharCode(data[dataI + offset]));
+        break;
+
+      case SET_UNLESS_EVEN:
+        if (data[dataI + offset] % 2 === 0) throw new Error('Non-terminating loop!');
+        data[dataI + offset] = value;
         break;
 
       case INPUT:

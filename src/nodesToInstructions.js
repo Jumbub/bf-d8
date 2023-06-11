@@ -5,8 +5,9 @@ const OUTPUT = 3;
 const GOTO_IF_ZERO = 4;
 const GOTO_IF_NOT_ZERO = 5;
 const SET = 6;
-const MOVE_WHILE_NOT_ZERO = 7;
-const ADD_WHILE_NOT_ZERO = 8;
+const SET_UNLESS_EVEN = 7;
+const MOVE_WHILE_NOT_ZERO = 8;
+const ADD_WHILE_NOT_ZERO = 9;
 
 // const ADD = 'ADD';
 // const MOVE = 'MOVE';
@@ -17,14 +18,14 @@ const ADD_WHILE_NOT_ZERO = 8;
 // const SET = 'SET';
 // const MOVE_WHILE_NOT_ZERO = 'MOVE_WHILE_NOT_ZERO';
 
+const INSTRUCTION_BYTES = 3;
 const nodesToInstructions = nodes => {
   const ins = nodesToInstructionsRecursive(nodes, 0);
-  const acc = new Int32Array(ins.length * 4);
+  const acc = new Int32Array(ins.length * INSTRUCTION_BYTES);
   for (let i = 0; i < ins.length; i++) {
-    acc[i * 4] = ins[i][0];
-    acc[i * 4 + 1] = ins[i][1];
-    acc[i * 4 + 2] = ins[i][2];
-    acc[i * 4 + 3] = ins[i][3];
+    acc[i * INSTRUCTION_BYTES] = ins[i][0];
+    acc[i * INSTRUCTION_BYTES + 1] = ins[i][1];
+    acc[i * INSTRUCTION_BYTES + 2] = ins[i][2];
   }
   return acc;
 };
@@ -35,24 +36,24 @@ const nodesToInstructionsRecursive = (nodes, accumulatedOffset) =>
     if (has(node.whileNotZero)) {
       const instructions = nodesToInstructionsRecursive(node.whileNotZero, trueOffset);
       return [
-        [GOTO_IF_ZERO, trueOffset, instructions.length + 1, 0],
+        [GOTO_IF_ZERO, trueOffset, instructions.length + 1],
         ...instructions,
-        [GOTO_IF_NOT_ZERO, trueOffset, -instructions.length - 1, 0],
+        [GOTO_IF_NOT_ZERO, trueOffset, -instructions.length - 1],
       ];
     } else if (has(node.add)) {
-      return [[ADD, trueOffset, node.add, 0]];
+      return [[ADD, trueOffset, node.add]];
     } else if (has(node.move)) {
-      return [[MOVE, 0, node.move, 0]];
+      return [[MOVE, 0, node.move]];
     } else if (has(node.input)) {
-      return [[INPUT, trueOffset, 0, 0]];
+      return [[INPUT, trueOffset, 0]];
     } else if (has(node.output)) {
-      return [[OUTPUT, trueOffset, 0, 0]];
+      return [[OUTPUT, trueOffset, 0]];
     } else if (has(node.set)) {
-      return [[SET, trueOffset, node.set, node.nonTerminatingIfEven ? 1 : 0]];
+      return node.nonTerminatingIfEven ? [[SET_UNLESS_EVEN, trueOffset, node.set]] : [[SET, trueOffset, node.set]];
     } else if (has(node.moveWhileNotZero)) {
-      return [[MOVE_WHILE_NOT_ZERO, trueOffset, node.moveWhileNotZero, 0]];
+      return [[MOVE_WHILE_NOT_ZERO, trueOffset, node.moveWhileNotZero]];
     } else if (has(node.addWhileNotZero)) {
-      return [[ADD_WHILE_NOT_ZERO, trueOffset, node.addWhileNotZero, 0]];
+      return [[ADD_WHILE_NOT_ZERO, trueOffset, node.addWhileNotZero]];
     }
     throw new Error(`Un-handled node [${JSON.stringify(node)}]`);
   });
