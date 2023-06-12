@@ -19,6 +19,17 @@ const simplifyNodes = allNodes => {
           // [>] => (move 1 while not zero)
           simple = [{ offset: node.offset, moveWhileNotZero: node.whileNotZero[0].move }];
         } else if (
+          node.whileNotZero?.filter(inner => inner.add === undefined).length == 0 &&
+          node.whileNotZero?.filter(inner => inner.add !== undefined).length == 2 &&
+          node.whileNotZero?.filter(inner => inner.offset === 0).length == 1 &&
+          node.whileNotZero?.filter(inner => inner.offset !== 0 && Math.abs(inner.add) == 1).length == 1 &&
+          node.whileNotZero?.filter(inner => inner.offset === 0 && inner.add === -1).length == 1
+        ) {
+          const to = node.whileNotZero?.find(inner => inner.offset !== 0);
+          // [->+] => (transfer value of A to B)
+          // [->-] => (transfer negative value of A to B)
+          simple = [{ offset: 0, [to.add === 1 ? 'transfer' : 'transferNegative']: to.offset }];
+        } else if (
           false &&
           node.whileNotZero?.filter(inner => inner.add === undefined).length == 0 &&
           node.whileNotZero?.filter(inner => inner.add !== undefined).length >= 2 &&

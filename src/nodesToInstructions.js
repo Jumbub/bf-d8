@@ -7,7 +7,8 @@ const GOTO_IF_NOT_ZERO = 5;
 const SET = 6;
 const SET_UNLESS_EVEN = 7;
 const MOVE_WHILE_NOT_ZERO = 8;
-const ADD_WHILE_NOT_ZERO = 9;
+const TRANSFER = 9;
+const TRANSFER_NEGATIVE = 10;
 
 const INSTRUCTION_BYTES = 3;
 const nodesToInstructions = nodes => {
@@ -43,8 +44,10 @@ const nodesToInstructionsRecursive = (nodes, accumulatedOffset) =>
       return node.nonTerminatingIfEven ? [[SET_UNLESS_EVEN, trueOffset, node.set]] : [[SET, trueOffset, node.set]];
     } else if (has(node.moveWhileNotZero)) {
       return [[MOVE_WHILE_NOT_ZERO, trueOffset, node.moveWhileNotZero]];
-    } else if (has(node.addWhileNotZero)) {
-      return [[ADD_WHILE_NOT_ZERO, trueOffset, node.addWhileNotZero]];
+    } else if (has(node.transfer)) {
+      return [[TRANSFER, trueOffset, node.transfer]];
+    } else if (has(node.transferNegative)) {
+      return [[TRANSFER_NEGATIVE, trueOffset, node.transferNegative]];
     }
     throw new Error(`Un-handled node [${JSON.stringify(node)}]`);
   });

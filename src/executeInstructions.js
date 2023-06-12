@@ -26,6 +26,16 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
         data[dataI + offset] = value;
         break;
 
+      case TRANSFER:
+        data[dataI + offset + value] += data[dataI + offset] * 1;
+        data[dataI + offset] = 0;
+        break;
+
+      case TRANSFER_NEGATIVE:
+        data[dataI + offset + value] += data[dataI + offset] * -1;
+        data[dataI + offset] = 0;
+        break;
+
       case GOTO_IF_ZERO:
         if (data[dataI + offset] === 0) instructionI += value * INSTRUCTION_BYTES;
         break;

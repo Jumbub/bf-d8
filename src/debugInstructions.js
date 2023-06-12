@@ -44,13 +44,6 @@ const debugInstructionsWarningStatefulFunction = (data, dataI, instruction) => {
       print(`${offsetPrefix} ADD_WHILE_NOT_ZERO ${value.from.add} (${loop})`);
       break;
 
-    case TRANSFER:
-      const transferLoop = value.to
-        .map(inner => `[${inner.offset}] ADD ${inner.add}*${value.sign}*${data[dataI + offset]}`)
-        .join(', ');
-      print(`${offsetPrefix} TRANSFER (${transferLoop})`);
-      break;
-
     default:
       print(`${offsetPrefix} ${JSON.stringify(instruction)}`);
   }
