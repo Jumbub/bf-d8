@@ -15,9 +15,6 @@ const simplifyNodes = allNodes => {
         } else if (node.add === 0) {
           // +- => nothing
           simple = [];
-        } else if (node.whileNotZero?.length === 0) {
-          // [] => nothing
-          simple = [];
         } else if (node.whileNotZero?.length === 1 && node.whileNotZero[0].move) {
           // [>] => (move 1 while not zero)
           simple = [{ offset: node.offset, moveWhileNotZero: node.whileNotZero[0].move }];
