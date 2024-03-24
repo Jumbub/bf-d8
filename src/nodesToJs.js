@@ -17,15 +17,15 @@ const nodesToJsRecursive = (nodes, accumulatedOffset, indent) => {
       const trueOffset = node.offset + accumulatedOffset;
       if (has(node.whileNotZero)) {
         const inner = nodesToJsRecursive(node.whileNotZero, trueOffset, indent + 1);
-        return `${ii}while (m[p] !== 0) {\n${inner}\n${ii}};`;
+        return `${ii}while (m[p + ${trueOffset}] !== 0) {\n${inner}\n${ii}};`;
       } else if (has(node.add)) {
-        return `${ii}m[p] += ${node.add};`;
+        return `${ii}m[p + ${trueOffset}] += ${node.add};`;
       } else if (has(node.move)) {
         return `${ii}p += ${node.move};`;
       } else if (has(node.input)) {
-        return `${ii}m[p] = read();`;
+        return `${ii}m[p + ${trueOffset}] = read();`;
       } else if (has(node.output)) {
-        return `${ii}write(String.fromCharCode(m[p]));`;
+        return `${ii}write(String.fromCharCode(m[p + ${trueOffset}]));`;
       }
       throw new Error(`Un-handled node [${JSON.stringify(node)}]`);
     })

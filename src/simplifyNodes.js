@@ -62,7 +62,7 @@ const simplifyNodes = allNodes => {
         } else if (left.move && right.move) {
           // >< => (move 1-1)
           simple = [{ move: left.move + right.move }];
-        } else if (false && left.move && right.offset !== undefined) {
+        } else if (left.move && right.offset !== undefined) {
           // >+ => (add 1 offset 1),(move 1)
           simple = [{ ...right, offset: left.move + right.offset }, { move: left.move + right.offset }];
         } else if (false && left.set !== undefined && right.add !== undefined && left.offset === right.offset) {
