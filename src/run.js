@@ -19,31 +19,26 @@ if (debug) {
 const code = read(fileName);
 if (debug) {
   readTime = performance.now();
-  // print(`CODE: ${code}\n`);
 }
 
 const tokens = codeToTokens(code);
 if (debug) {
   tokensTime = performance.now();
-  // print(`TOKENS: ${JSON.stringify(tokens)}\n`);
 }
 
 nodes = tokensToNodes(tokens);
 if (debug) {
   nodesTime = performance.now();
-  // print(`NODES: ${JSON.stringify(nodes)}\n`);
 }
 
 nodes = simplifyNodes(nodes);
 if (debug) {
   simplifiedNodesTime = performance.now();
-  // print(`SIMPLIFIED: ${JSON.stringify(nodes)}\n`);
 }
 
 const instructions = nodesToJs(nodes, bitSize, memorySize);
 if (debug) {
   instructionsTime = performance.now();
-  // print(`INSTRUCTIONS: ${instructions}\n`);
 }
 
 writeFile('generated.js', instructions);
