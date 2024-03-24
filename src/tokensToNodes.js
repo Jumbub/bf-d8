@@ -1,51 +1,41 @@
 /** @typedef {{
- *     nodes?: Node[];
+ *     whileNotZero?: Node[];
  *     move?: number;
  *     add?: number;
- *     set?: number;
  *     offset?: number
  * }} NodeInfo
  */
 
 /**
  * @param {Token[]} tokens
- * @returns {Node}
+ * @returns {NodeInfo}
  *
  * Assumes valid program.
  */
 const tokensToNodes = tokens =>
   tokens.reduce(
-    (allGroups, token) => {
+    (allTokenArrays, token) => {
       switch (token) {
         case '[':
-          return [...allGroups, []];
+          return [...allTokenArrays, []];
 
         case ']':
           const loop = {
-            whileNotZero: allGroups.pop(),
+            whileNotZero: allTokenArrays.at(-1),
             offset: 0,
           };
-
-          const newCurrentGroup = allGroups.pop();
-          return [...allGroups, [...newCurrentGroup, loop]];
+          return [...allTokenArrays.slice(0, -2), [...allTokenArrays.at(-2), loop]];
 
         default:
-          const operation =
-            token === '>'
-              ? { move: 1 }
-              : token === '<'
-              ? { move: -1 }
-              : token === '+'
-              ? { add: 1, offset: 0 }
-              : token === '-'
-              ? { add: -1, offset: 0 }
-              : token === '.'
-              ? { output: true, offset: 0 }
-              : token === ','
-              ? { input: true, offset: 0 }
-              : 'IMPOSSIBLE';
-          const currentGroup = allGroups.pop();
-          return [...allGroups, [...currentGroup, operation]];
+          const operation = {
+            '>': { move: 1 },
+            '<': { move: -1 },
+            '+': { add: 1, offset: 0 },
+            '-': { add: -1, offset: 0 },
+            '.': { output: true, offset: 0 },
+            ',': { input: true, offset: 0 },
+          }[token];
+          return [...allTokenArrays.slice(0, -1), [...allTokenArrays.at(-1), operation]];
       }
     },
     [[]],
