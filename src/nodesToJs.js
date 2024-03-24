@@ -26,6 +26,8 @@ const nodesToJsRecursive = (nodes, accumulatedOffset, indent) => {
         return `${ii}m[p + ${trueOffset}] = read();`;
       } else if (has(node.output)) {
         return `${ii}write(String.fromCharCode(m[p + ${trueOffset}]));`;
+      } else if (has(node.set) && !node.nonTerminatingIfEven) {
+        return `${ii}m[p + ${trueOffset}] = ${node.set};`;
       }
       throw new Error(`Un-handled node [${JSON.stringify(node)}]`);
     })

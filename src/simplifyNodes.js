@@ -43,7 +43,7 @@ const simplifyNodes = allNodes => {
               offset: node.offset,
             },
           ];
-        } else if (false && node.whileNotZero?.length === 1 && node.whileNotZero[0].add) {
+        } else if (node.whileNotZero?.length === 1 && node.whileNotZero[0].add) {
           // [-] => (set to 0)
           // Technically this could break non-terminating apps, so store a non-termination check.
           const inner = node.whileNotZero[0];
@@ -65,7 +65,7 @@ const simplifyNodes = allNodes => {
         } else if (left.move && right.offset !== undefined) {
           // >+ => (add 1 offset 1),(move 1)
           simple = [{ ...right, offset: left.move + right.offset }, { move: left.move + right.offset }];
-        } else if (false && left.set !== undefined && right.add !== undefined && left.offset === right.offset) {
+        } else if (left.set !== undefined && right.add !== undefined && left.offset === right.offset) {
           // (set 1)(add 2) => (set 3)
           simple = [{ set: left.set + right.add, offset: left.offset }];
         }
