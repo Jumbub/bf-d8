@@ -11,21 +11,25 @@ const TRANSFER = 9;
 const TRANSFER_NEGATIVE = 10;
 
 const INSTRUCTION_BYTES = 3;
-const nodesToInstructions = (nodes, bitSize, memorySize) => {
+const nodesToJs = (nodes, bitSize, memorySize) => {
   const memoryDataStructure = bitSize === 8 ? 'Uint8Array' : bitSize === 16 ? 'Uint16Array' : 'Uint32Array';
 
-  return (
-    `const m = new ${memoryDataStructure}(${memorySize});\nlet p = 0;\n` + nodesToInstructionsRecursive(nodes, 0, 0)
-  );
+  return `// Auto-generated JS
+const m = new ${memoryDataStructure}(${memorySize});
+let p = 0;
+function go() {
+${nodesToJsRecursive(nodes, 0, 1)}
+};
+go();`;
 };
 
-const nodesToInstructionsRecursive = (nodes, accumulatedOffset, indent) => {
+const nodesToJsRecursive = (nodes, accumulatedOffset, indent) => {
   const ii = '\t'.repeat(indent);
   return nodes
     .flatMap(node => {
       const trueOffset = node.offset + accumulatedOffset;
       if (has(node.whileNotZero)) {
-        const inner = nodesToInstructionsRecursive(node.whileNotZero, trueOffset, indent + 1);
+        const inner = nodesToJsRecursive(node.whileNotZero, trueOffset, indent + 1);
         return `${ii}while (m[p] !== 0) {\n${inner}\n${ii}};`;
       } else if (has(node.add)) {
         return `${ii}m[p] += ${node.add};`;
