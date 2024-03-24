@@ -4,6 +4,11 @@ const nodesToJs = (nodes, bitSize, memorySize) => {
   return `// Auto-generated JS
 const m = new ${memoryDataStructure}(${memorySize});
 let p = 0;
+
+function w(o) {
+  write(String.fromCharCode(m[p + o]));
+}
+
 function go() {
 ${nodesToJsRecursive(nodes, 0, 1)}
 };
@@ -25,7 +30,7 @@ const nodesToJsRecursive = (nodes, accumulatedOffset, indent) => {
       } else if (has(node.input)) {
         return `${ii}m[p + ${trueOffset}] = read();`;
       } else if (has(node.output)) {
-        return `${ii}write(String.fromCharCode(m[p + ${trueOffset}]));`;
+        return `${ii}w(${trueOffset});`;
       } else if (has(node.set) && !node.nonTerminatingIfEven) {
         return `${ii}m[p + ${trueOffset}] = ${node.set};`;
       }
