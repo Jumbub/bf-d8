@@ -1,16 +1,3 @@
-const ADD = 0;
-const MOVE = 1;
-const INPUT = 2;
-const OUTPUT = 3;
-const GOTO_IF_ZERO = 4;
-const GOTO_IF_NOT_ZERO = 5;
-const SET = 6;
-const SET_UNLESS_EVEN = 7;
-const MOVE_WHILE_NOT_ZERO = 8;
-const TRANSFER = 9;
-const TRANSFER_NEGATIVE = 10;
-
-const INSTRUCTION_BYTES = 3;
 const nodesToJs = (nodes, bitSize, memorySize) => {
   const memoryDataStructure = bitSize === 8 ? 'Uint8Array' : bitSize === 16 ? 'Uint16Array' : 'Uint32Array';
 
