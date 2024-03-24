@@ -1,7 +1,7 @@
 load('./src/codeToTokens.js');
 load('./src/tokensToNodes.js');
 load('./src/simplifyNodes.js');
-load('./src/nodeToString.js');
+load('./src/nodesToString.js');
 load('./src/nodesToInstructions.js');
 load('./src/executeInstructions.js');
 
