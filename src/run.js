@@ -1,43 +1,64 @@
+const fileName = arguments[0];
+const bitSize = parseInt(arguments[1] ?? 32);
+const memorySize = parseInt(arguments[2] ?? 30000);
+const debug = !!arguments[3];
+
+if (debug) {
+  bootTime = performance.now();
+}
+
 load('./src/codeToTokens.js');
 load('./src/tokensToNodes.js');
 load('./src/simplifyNodes.js');
-load('./src/nodesToString.js');
-load('./src/nodesToInstructions.js');
-load('./src/executeInstructions.js');
+load('./src/nodesToJs.js');
 
-const fileName = arguments[0];
-const bitSize = parseInt(arguments[1] ?? 8);
-const memorySize = parseInt(arguments[2] ?? 30000);
+if (debug) {
+  moduleTime = performance.now();
+}
 
 const code = read(fileName);
+if (debug) {
+  readTime = performance.now();
+}
 
 const tokens = codeToTokens(code);
-const tokensTime = performance.now();
-// print(`TOKENS: ${JSON.stringify(tokens)}\n`);
+if (debug) {
+  tokensTime = performance.now();
+}
 
-const nodes = tokensToNodes(tokens);
-const nodesTime = performance.now();
-// print(`NODES: ${JSON.stringify(nodes)}\n`);
+nodes = tokensToNodes(tokens);
+if (debug) {
+  nodesTime = performance.now();
+}
 
-const simplifiedNodes = simplifyNodes(nodes);
-const simplifiedNodesTime = performance.now();
-// print(`SIMPLIFIED: ${JSON.stringify(simplifiedNodes)}\n`);
+nodes = simplifyNodes(nodes);
+if (debug) {
+  simplifiedNodesTime = performance.now();
+}
 
-// print(`PROGRAM:\n${nodesToString(simplifiedNodes, 0)}\n`);
+const instructions = nodesToJs(nodes, bitSize, memorySize);
+if (debug) {
+  instructionsTime = performance.now();
+}
 
-const instructions = nodesToInstructions(simplifiedNodes);
-const instructionsTime = performance.now();
+writeFile('generated.js', instructions);
+if (debug) {
+  writeTime = performance.now();
+}
 
-// print(`INSTRUCTIONS:\n${instructions}\n`);
+load('generated.js');
+if (debug) {
+  executeTime = performance.now();
+}
 
-print(`starting execution`);
-executeInstructions(instructions, bitSize === 8 ? Uint8Array : bitSize === 16 ? Uint16Array : Uint32Array, memorySize);
-const executeInstructionsTime = performance.now();
-print(`finished execution ${executeInstructionsTime}ms`);
-print(`\ntokens ${tokensTime}ms`);
-print(`nodes ${nodesTime - tokensTime}ms`);
-print(`simplification ${simplifiedNodesTime - nodesTime}ms`);
-print(`instructions ${instructionsTime - simplifiedNodesTime}ms`);
-print(`execution ${performance.now() - instructionsTime}ms`);
-
-// writeFile('../working', nodesToString(simplifiedNodes, 0));
+if (debug) {
+  print(`bootTime ${bootTime}ms`);
+  print(`moduleTime ${moduleTime - bootTime}ms`);
+  print(`readTime ${readTime - moduleTime}ms`);
+  print(`tokens ${tokensTime - readTime}ms`);
+  print(`nodes ${nodesTime - tokensTime}ms`);
+  print(`simplification ${simplifiedNodesTime - nodesTime}ms`);
+  print(`instructions ${instructionsTime - simplifiedNodesTime}ms`);
+  print(`write ${writeTime - instructionsTime}ms`);
+  print(`done ${executeTime - writeTime}ms`);
+}

@@ -1,5 +1,7 @@
 output.txt
+output-*.txt
 v8.log
 v8.json
 test.b
 working
+generated.js
