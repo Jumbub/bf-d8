@@ -15,6 +15,14 @@ const simplifyNodes = allNodes => {
         } else if (node.add === 0) {
           // +- => nothing
           simple = [];
+        } else if (node.whileNotZero?.length === 1 && node.whileNotZero[0].add) {
+          // [-] => (set to 0) :: Technically this could break non-terminating apps, so store a non-termination check.
+          const inner = node.whileNotZero[0];
+          simple = [{ set: 0, offset: inner.offset, nonTerminatingIfEven: !inner.add }];
+        } else if (node.whileNotZero) {
+          // [...] => [(simplified ...)]
+          const simplified = simplifyNodes(node.whileNotZero);
+          if (simplified !== node.whileNotZero) simple = [{ offset: node.offset, whileNotZero: simplified }];
         } else if (
           false &&
           node.whileNotZero?.filter(inner => inner.add === undefined).length == 0 &&
@@ -24,11 +32,10 @@ const simplifyNodes = allNodes => {
           node.whileNotZero?.filter(inner => inner.offset === 0 && inner.add === -1).length == 1
         ) {
           const to = node.whileNotZero?.find(inner => inner.offset !== 0);
-          // [->+] => (transfer value of A to B)
-          // [->-] => (transfer negative value of A to B)
+          // [->+<] => (transfer value of A to B)
+          // [->-<] => (transfer negative value of A to B)
           simple = [{ offset: 0, [to.add === 1 ? 'transfer' : 'transferNegative']: to.offset }];
         } else if (
-          false &&
           node.whileNotZero?.filter(inner => inner.add === undefined).length == 0 &&
           node.whileNotZero?.filter(inner => inner.add !== undefined).length >= 2 &&
           node.whileNotZero?.filter(inner => inner.offset === 0).length == 1
@@ -43,15 +50,6 @@ const simplifyNodes = allNodes => {
               offset: node.offset,
             },
           ];
-        } else if (node.whileNotZero?.length === 1 && node.whileNotZero[0].add) {
-          // [-] => (set to 0)
-          // Technically this could break non-terminating apps, so store a non-termination check.
-          const inner = node.whileNotZero[0];
-          simple = [{ set: 0, offset: inner.offset, nonTerminatingIfEven: !inner.add }];
-        } else if (node.whileNotZero) {
-          // [...] => [(simplified ...)]
-          const simplified = simplifyNodes(node.whileNotZero);
-          if (simplified !== node.whileNotZero) simple = [{ offset: node.offset, whileNotZero: simplified }];
         }
       } else if (nodes.length === 2) {
         const [left, right] = nodes;

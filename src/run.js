@@ -52,13 +52,13 @@ if (debug) {
 }
 
 if (debug) {
-  print(`boot   \t${bootTime}ms`);
-  print(`modules ${moduleTime - bootTime}ms`);
-  print(`read   \t${readTime - moduleTime}ms`);
-  print(`token  \t${tokensTime - readTime}ms`);
-  print(`node   \t${nodesTime - tokensTime}ms`);
-  print(`simple \t${simplifiedNodesTime - nodesTime}ms`);
-  print(`js     \t${instructionsTime - simplifiedNodesTime}ms`);
-  print(`write  \t${writeTime - instructionsTime}ms`);
-  print(`execute\t${executeTime - writeTime}ms`);
+  print(`    boot ${bootTime.toFixed(2)}ms`);
+  print(` modules ${(moduleTime - bootTime).toFixed(2)}ms`);
+  print(`    read ${(readTime - moduleTime).toFixed(2)}ms`);
+  print(`   token ${(tokensTime - readTime).toFixed(2)}ms`);
+  print(`    node ${(nodesTime - tokensTime).toFixed(2)}ms`);
+  print(`optimise ${(simplifiedNodesTime - nodesTime).toFixed(2)}ms`);
+  print(`      js ${(instructionsTime - simplifiedNodesTime).toFixed(2)}ms`);
+  print(`   write ${(writeTime - instructionsTime).toFixed(2)}ms`);
+  print(` execute ${(executeTime - writeTime).toFixed(2)}ms`);
 }
