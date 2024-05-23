@@ -22,7 +22,7 @@ ${invoke}`;
 let methodNumber = 0;
 let methods = {};
 
-const nodesToJsRecursive = (nodes, accumulatedOffset, indent, maxValue) => {
+const nodesToJsRecursive = (nodes, accumulatedOffset, maxValue) => {
   let hasFunctionCalls = false;
   const code = nodes
     .flatMap(node => {
@@ -30,10 +30,10 @@ const nodesToJsRecursive = (nodes, accumulatedOffset, indent, maxValue) => {
       if (has(node.while)) {
         hasFunctionCalls = true;
         if (node.while.value <= -maxValue || node.while.value >= maxValue) throw new Error('bad!');
-        const invoke = nodesToJsRecursive(node.while.loop, trueOffset, indent + 1, maxValue);
+        const invoke = nodesToJsRecursive(node.while.loop, trueOffset, maxValue);
         return `\twhile (m[p + ${trueOffset}] ${node.while.not ? '!' : '='}== ${
           node.while.value < 0 ? maxValue + node.while.value : node.while.value
-        }) {\n\t\t${invoke}\n\t};`;
+        }) {\n\t${invoke.replace(/\n\t/g, '\n\t\t')}\n\t};`;
       } else if (has(node.add)) {
         return `\tm[p + ${trueOffset}] += ${node.add};`;
       } else if (has(node.move)) {
