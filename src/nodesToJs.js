@@ -58,7 +58,7 @@ const nodesToJsRecursive = (nodes, accumulatedOffset, maxValue) => {
     return `${existingMethod.name}()`;
   }
 
-  const methodName = `method${++methodNumber}`;
+  const methodName = `m${++methodNumber}`;
 
   methods[code] = {
     name: methodName,
