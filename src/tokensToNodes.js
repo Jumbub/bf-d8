@@ -1,5 +1,5 @@
 /** @typedef {{
- *     whileNotZero?: Node[];
+ *     while?: {value: number, not?: boolean, loop: Node[]};
  *     move?: number;
  *     add?: number;
  *     offset?: number
@@ -21,7 +21,11 @@ const tokensToNodes = tokens =>
 
         case ']':
           const loop = {
-            whileNotZero: allTokenArrays.at(-1),
+            while: {
+              loop: allTokenArrays.at(-1),
+              not: true,
+              value: 0,
+            },
             offset: 0,
           };
           return [...allTokenArrays.slice(0, -2), [...allTokenArrays.at(-2), loop]];

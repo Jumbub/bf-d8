@@ -20,9 +20,11 @@ const nodesToJsRecursive = (nodes, accumulatedOffset, indent) => {
   return nodes
     .flatMap(node => {
       const trueOffset = node.offset + accumulatedOffset;
-      if (has(node.whileNotZero)) {
-        const inner = nodesToJsRecursive(node.whileNotZero, trueOffset, indent + 1);
-        return `${ii}while (m[p + ${trueOffset}] !== 0) {\n${inner}\n${ii}};`;
+      if (has(node.while)) {
+        const inner = nodesToJsRecursive(node.while.loop, trueOffset, indent + 1);
+        return `${ii}while (m[p + ${trueOffset}] ${node.while.not ? '!' : '='}== ${
+          node.while.value
+        }) {\n${inner}\n${ii}};`;
       } else if (has(node.add)) {
         return `${ii}m[p + ${trueOffset}] += ${node.add};`;
       } else if (has(node.move)) {
