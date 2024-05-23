@@ -17,8 +17,8 @@ const simplifyNodes = allNodes => {
           simple = [];
         } else if (node.while && node.while.loop.length === 1 && node.while.loop[0].add) {
           // [-] => (set to 0) :: Technically this could break non-terminating apps, so store a non-termination check.
-          // const inner = node.while.loop[0];
-          // simple = [{ set: 0, offset: inner.offset, nonTerminatingIfEven: !inner.add }];
+          const inner = node.while.loop[0];
+          simple = [{ set: 0, offset: inner.offset, nonTerminatingIfEven: !inner.add }];
         } else if (node.while) {
           // [...] => [(simplified ...)]
           const simplified = simplifyNodes(node.while.loop);
