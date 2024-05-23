@@ -12,13 +12,15 @@ function w(o) {
   write(String.fromCharCode(m[p + o]));
 }
 
-${methods}
+${Object.entries(methods)
+  .map(([, { code }]) => code)
+  .join('\n')}
 
 ${startMethodName}()`;
 };
 
 let methodNumber = 0;
-let methods = ``;
+let methods = {};
 
 const nodesToJsRecursive = (nodes, accumulatedOffset, indent, maxValue) => {
   const code = nodes
@@ -46,11 +48,20 @@ const nodesToJsRecursive = (nodes, accumulatedOffset, indent, maxValue) => {
     })
     .join('\n');
 
+  const existingMethod = methods[code];
+
+  if (existingMethod) {
+    return existingMethod.name;
+  }
+
   const methodName = `method${++methodNumber}`;
 
-  methods += `function ${methodName}(){
+  methods[code] = {
+    name: methodName,
+    code: `function ${methodName}(){
 ${code}
-}\n`;
+}\n`,
+  };
 
   return methodName;
 };
