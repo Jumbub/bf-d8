@@ -23,36 +23,6 @@ const simplifyNodes = allNodes => {
           // [...] => [(simplified ...)]
           const simplified = simplifyNodes(node.while.loop);
           if (simplified !== node.while.loop) simple = [{ ...node, while: { ...node.while, loop: simplified } }];
-        } else if (
-          false &&
-          node.while &&
-          node.while.loop.filter(inner => inner.add === undefined).length == 0 &&
-          node.while.loop.filter(inner => inner.add !== undefined).length == 2 &&
-          node.while.loop.filter(inner => inner.offset === 0).length == 1 &&
-          node.while.loop.filter(inner => inner.offset !== 0 && Math.abs(inner.add) == 1).length == 1 &&
-          node.while.loop.filter(inner => inner.offset === 0 && inner.add === -1).length == 1
-        ) {
-          const to = node.while?.loop.find(inner => inner.offset !== 0);
-          // [->+<] => (transfer value of A to B)
-          // [->-<] => (transfer negative value of A to B)
-          simple = [{ offset: 0, [to.add === 1 ? 'transfer' : 'transferNegative']: to.offset }];
-        } else if (
-          false &&
-          node.while &&
-          node.while.loop.filter(inner => inner.add === undefined).length == 0 &&
-          node.while.loop.filter(inner => inner.add !== undefined).length >= 2 &&
-          node.while.loop.filter(inner => inner.offset === 0).length == 1
-        ) {
-          // [-->+>++] (while A not zero (add -2 to A; add +1 to B; add +2 to B))
-          simple = [
-            {
-              addWhileNotZero: {
-                from: node.while.loop.find(inner => inner.offset === 0),
-                to: node.while.loop.filter(inner => inner.offset !== 0),
-              },
-              offset: node.offset,
-            },
-          ];
         }
       } else if (nodes.length === 2) {
         const [left, right] = nodes;
