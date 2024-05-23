@@ -2,7 +2,7 @@ const nodesToJs = (nodes, bitSize, memorySize) => {
   const memoryDataStructure = bitSize === 8 ? 'Uint8Array' : bitSize === 16 ? 'Uint16Array' : 'Uint32Array';
   const maxValue = Math.pow(2, bitSize);
 
-  const startMethodName = nodesToJsRecursive(nodes, 0, 1, maxValue);
+  const invoke = nodesToJsRecursive(nodes, 0, 1, maxValue);
 
   return `// Auto-generated JS
 const m = new ${memoryDataStructure}(${memorySize});
@@ -16,23 +16,24 @@ ${Object.entries(methods)
   .map(([, { code }]) => code)
   .join('\n')}
 
-${startMethodName}()`;
+${invoke}`;
 };
 
 let methodNumber = 0;
 let methods = {};
 
 const nodesToJsRecursive = (nodes, accumulatedOffset, indent, maxValue) => {
+  let hasFunctionCalls = false;
   const code = nodes
     .flatMap(node => {
       const trueOffset = node.offset + accumulatedOffset;
       if (has(node.while)) {
+        hasFunctionCalls = true;
         if (node.while.value <= -maxValue || node.while.value >= maxValue) throw new Error('bad!');
-        print(node.while.value, maxValue);
-        const methodName = nodesToJsRecursive(node.while.loop, trueOffset, indent + 1, maxValue);
+        const invoke = nodesToJsRecursive(node.while.loop, trueOffset, indent + 1, maxValue);
         return `\twhile (m[p + ${trueOffset}] ${node.while.not ? '!' : '='}== ${
           node.while.value < 0 ? maxValue + node.while.value : node.while.value
-        }) {\n\t\t${methodName}()\n\t};`;
+        }) {\n\t\t${invoke}\n\t};`;
       } else if (has(node.add)) {
         return `\tm[p + ${trueOffset}] += ${node.add};`;
       } else if (has(node.move)) {
@@ -48,10 +49,13 @@ const nodesToJsRecursive = (nodes, accumulatedOffset, indent, maxValue) => {
     })
     .join('\n');
 
-  const existingMethod = methods[code];
+  if (!hasFunctionCalls) {
+    return code;
+  }
 
+  const existingMethod = methods[code];
   if (existingMethod) {
-    return existingMethod.name;
+    return `${existingMethod.name}()`;
   }
 
   const methodName = `method${++methodNumber}`;
@@ -63,5 +67,5 @@ ${code}
 }\n`,
   };
 
-  return methodName;
+  return `${methodName}()`;
 };
