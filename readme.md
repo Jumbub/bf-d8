@@ -1,69 +1,18 @@
 # V8 BF
 
-[V8](https://v8.dev/) powered [BF](https://esolangs.org/wiki/Brainfuck) execution environment.
+Running [BF](https://esolangs.org/wiki/Brainfuck) on [V8](https://v8.dev/) with [D8](https://v8.dev/docs/d8).
 
-## Benchmarks
+## Getting started
 
-Benchmarking run on `tests/mandelbrot.b`
-
-##### [First working code](https://github.com/Jumbub/bf/commit/435d6bc0fd33609b6f63d579fb770a64a21c2f46)
-
-> 63.00s user 0.02s system 100% cpu 1:03.00 total
-
-##### Using Uint8Array for data storage
-
-> bout 10% increase in performance (from slightly more lazy undefined value checking than above)
-
-##### Pre computing loop jumps, and pre processing commands slightly
-
-> bout 20% increase in performance (from slightly more lazy undefined value checking than above)
-
-##### Merging increment operations
-
-> bout 20% increase in performance (from slightly more lazy undefined value checking than above)
-
-##### Merging pointer movement operations
-
-> bout 400% increase in performance (from slightly more lazy undefined value checking than above)
-
-##### Aliasing the reset value loop `[-]`
-
-> 2% increase in performance
-
-##### Aliasing the "move til zero" loop `[>]`
-
-> 50% increase in performance
-
-##### Remove empty move operations at the end of loops
-
-> 1.5% increase in performance
-
-##### Replace loops which mutate variable based on another variable with fixed operations
-
-> 15% performance decrease!!!
-
-##### Merge assignment followed by addition into single assignment
-
-> 2% increase in performance
-
-##### Fast array value referencing
-
-949bdad7738fd3a42596220ecc42f167b61d45ff
-e92bcd81c5d92d642b292f031b616cd0873c2f82
-288f671e922eaebf0aa27b2ce2300fcff0f8685d
-also note that creating a common `const terminateIfEven = instructions[instructionI][3]` variable caused a 2.5% slow down.
-
-## Setup
+### Install
 
 - [Build V8](https://v8.dev/docs/build)
-- [Execute app with D8](https://v8.dev/docs/d8)
-
-### Recommended alias
-
-```bash
-alias d8=~/repos/v8/v8/out/x64.release/d8
-export D8_PATH="~/repos/v8/v8/out/x64.release"
-```
+- Setup D8 binary for use
+  ```bash
+  V8_REPO_LOCATION=~/v8 # example location
+  alias d8="$V8_REPO_LOCATION/v8/out/x64.release/d8"
+  export D8_PATH="$V8_REPO_LOCATION/v8/out/x64.release"
+  ```
 
 ### Usage
 
@@ -71,17 +20,28 @@ export D8_PATH="~/repos/v8/v8/out/x64.release"
 d8 src/run.js -- <program.b>
 ```
 
-Example programs can be found in the `tests` folder.
-
-E.g. `d8 src/run.js -- tests/hello-world.b`
-
-### Tests
+Included programs:
 
 ```bash
-# Single test
-d8 src/run.js -- tests/hello-world.b > output.txt && diff output.txt tests/hello-world.b && echo Passed test! || echo Failed test!
+d8 src/run.js -- tests/hello-world.b
+```
 
-# Test suite
+```bash
+d8 src/run.js -- tests/mandelbrot.b
+```
+
+## Testing
+
+Single test:
+
+```bash
+PROGRAM=tests/hello-world
+d8 src/run.js -- "${PROGRAM}.b" > output.txt && diff output.txt "${PROGRAM}.txt" && echo "\033[0;32mPass\033[0m" || echo "\033[0;31mFail\033[0m"
+```
+
+All tests:
+
+```bash
 find tests/*.b | grep -oP "(?<=/)[\-\w]+(?=.b)" | xargs -n 1 sh -c '<d8-executable-location> src/run.js -- tests/$0.b > output.txt && diff output.txt tests/$0.txt && echo Passed $0 test! || echo Failed $0 test!'
 ```
 
