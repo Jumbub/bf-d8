@@ -1,4 +1,4 @@
-# V8 BF
+# V8 powered BF
 
 Running [BF](https://esolangs.org/wiki/Brainfuck) on [V8](https://v8.dev/) with [D8](https://v8.dev/docs/d8).
 
