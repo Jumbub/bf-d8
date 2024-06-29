@@ -3,10 +3,11 @@ load('./src/debugInstructions.js');
 const not = value => !value;
 const missing = property => property !== undefined;
 const newBlock = value => ({
+  offset: value.offset,
   inputs: value.inputs, // the initial values of addresses we've read
   outputs: {}, // the final values of addresses we've mutated
   writes: [], // the printed values
-  reads: false, // too lazy to build out input handling
+  reads: [],
   instructions: value.instructions, // the instructions
 });
 
@@ -35,6 +36,7 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
 
   blocks.push(
     newBlock({
+      offset: 0,
       inputs: { 0: 0 },
       instructions: makeInstructions(0, 1),
     }),
@@ -45,12 +47,20 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
       throw new Error(`Bad number of blocks remaining: ${blocks.length}`);
     }
     const block = blocks.pop();
-    finishedBlocks[block.instructions] = finishedBlocks[block.instructions] ?? [];
-    finishedBlocks[block.instructions].push(block);
+    if (block.reads.length > 0) {
+      // throw away
+    } else {
+      finishedBlocks[block.instructions] = finishedBlocks[block.instructions] ?? [];
+      finishedBlocks[block.instructions].push(block);
+    }
   };
 
   const markPushedUserOutput = character => {
     blocks.forEach(block => block.writes.push(character));
+  };
+
+  const markPushedUserInput = character => {
+    blocks.forEach(block => block.inputs.push(character));
   };
 
   for (let instructionI = 0; instructionI < instructions.length; instructionI += INSTRUCTION_BYTES) {
@@ -59,34 +69,52 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
     const value = instructions[instructionI + 2];
 
     const pushNewBlock = () => {
+      const instructions = makeInstructions(instructionI);
+
+      if (instructions in finishedBlocks) {
+        for (const { inputs, outputs, writes } of finishedBlocks[instructions]) {
+          if (Object.entries(inputs).every(([key, value]) => data[dataI + Number(key)] === value)) {
+            console.log('value!', performance.now());
+            for (const [key, value] of Object.entries(outputs)) {
+              data[dataI + Number(key)] = value;
+            }
+            writes.forEach(value => write(value));
+            return false;
+          }
+        }
+      }
+
+      const blockOffset = dataI;
+      const dataAddress = dataI + offset;
+      const relativeDataAddress = dataAddress - blockOffset;
       blocks.push(
         newBlock({
-          inputs: { [dataI + offset]: data[dataI + offset] },
-          instructions: makeInstructions(instructionI),
+          offset: blockOffset,
+          inputs: { [relativeDataAddress]: data[dataAddress] },
+          instructions,
         }),
       );
+      console.log('pushed', performance.now());
       return true;
     };
 
     const markReadData = () => {
       blocks.forEach(block => {
+        const dataAddress = dataI + offset;
+        const relativeDataAddress = dataAddress - block.offset;
         // if first read for address
-        if (not(dataI + offset in block.inputs)) {
+        if (not(relativeDataAddress in block.inputs)) {
           // store first read value
-          block.inputs[dataI + offset] = data[dataI + offset];
+          block.inputs[relativeDataAddress] = data[dataAddress];
         }
       });
     };
 
     const markMutatedData = () => {
       blocks.forEach(block => {
-        block.outputs[dataI + offset] = data[dataI + offset];
-      });
-    };
-
-    const markReadUserInput = () => {
-      blocks.forEach(block => {
-        block.reads = true;
+        const dataAddress = dataI + offset;
+        const relativeDataAddress = dataAddress - block.offset;
+        block.outputs[relativeDataAddress] = data[dataAddress];
       });
     };
 
@@ -103,12 +131,8 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
 
       case GOTO_IF_ZERO:
         markReadData();
-        if (data[dataI + offset] === 0) {
+        if (data[dataI + offset] === 0 || !pushNewBlock()) {
           instructionI += value * INSTRUCTION_BYTES;
-        } else {
-          if (!pushNewBlock()) {
-            instructionI += value * INSTRUCTION_BYTES;
-          }
         }
         break;
 
@@ -121,20 +145,21 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
         }
         break;
 
-      case WRITE:
+      case WRITE: {
         const character = String.fromCharCode(data[dataI + offset]);
         markMutatedData();
         write(character);
         markPushedUserOutput(character);
         break;
+      }
 
-      case READ:
+      case READ: {
+        const character = (readline() ?? '').charCodeAt(0);
         markReadData();
-        markReadUserInput();
-        blocks.forEach(block => block.writes.push(character));
-        // execute
-        data[dataI + offset] = (readline() ?? '').charCodeAt(0);
+        data[dataI + offset] = character;
+        markPushedUserInput(character);
         break;
+      }
 
       default:
         throw new Error(`Unknown instruction: ${JSON.stringify(type)}`);
