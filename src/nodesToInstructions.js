@@ -1,7 +1,9 @@
+const has = property => property !== undefined;
+
 const ADD = 0;
 const MOVE = 1;
-const INPUT = 2;
-const OUTPUT = 3;
+const READ = 2;
+const WRITE = 3;
 const GOTO_IF_ZERO = 4;
 const GOTO_IF_NOT_ZERO = 5;
 const SET = 6;
@@ -37,9 +39,9 @@ const nodesToInstructionsRecursive = (nodes, accumulatedOffset) =>
     } else if (has(node.move)) {
       return [[MOVE, 0, node.move]];
     } else if (has(node.input)) {
-      return [[INPUT, trueOffset, 0]];
+      return [[READ, trueOffset, 0]];
     } else if (has(node.output)) {
-      return [[OUTPUT, trueOffset, 0]];
+      return [[WRITE, trueOffset, 0]];
     } else if (has(node.set)) {
       return node.nonTerminatingIfEven ? [[SET_UNLESS_EVEN, trueOffset, node.set]] : [[SET, trueOffset, node.set]];
     } else if (has(node.moveWhileNotZero)) {

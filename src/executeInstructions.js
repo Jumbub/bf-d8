@@ -1,67 +1,147 @@
 load('./src/debugInstructions.js');
 
+const not = value => !value;
+const missing = property => property !== undefined;
+const newBlock = value => ({
+  inputs: value.inputs, // the initial values of addresses we've read
+  outputs: {}, // the final values of addresses we've mutated
+  writes: [], // the printed values
+  reads: false, // too lazy to build out input handling
+  instructions: value.instructions, // the instructions
+});
+
 const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
   let data = new DATA_TYPE(DATA_LENGTH);
   let dataI = 0;
-  for (let instructionI = 0; instructionI < instructions.length; instructionI += INSTRUCTION_BYTES) {
-    // debugInstructionsWarningStatefulFunction(data, dataI, instructions[instructionI]);
 
+  let finishedBlocks = {};
+  let blocks = [];
+
+  const makeInstructions = (instructionI, stack = 0) => {
+    let is = '';
+    for (; instructionI < instructions.length; instructionI += INSTRUCTION_BYTES) {
+      is += String(instructions[instructionI]);
+      if (instructions[instructionI] === GOTO_IF_ZERO) {
+        stack++;
+      } else if (instructions[instructionI] === GOTO_IF_NOT_ZERO) {
+        stack--;
+      }
+      if (stack === 0) {
+        return is;
+      }
+    }
+    return is;
+  };
+
+  blocks.push(
+    newBlock({
+      inputs: { 0: 0 },
+      instructions: makeInstructions(0, 1),
+    }),
+  );
+
+  const popBlock = () => {
+    if (blocks.length == 0) {
+      throw new Error(`Bad number of blocks remaining: ${blocks.length}`);
+    }
+    const block = blocks.pop();
+    finishedBlocks[block.instructions] = finishedBlocks[block.instructions] ?? [];
+    finishedBlocks[block.instructions].push(block);
+  };
+
+  const markPushedUserOutput = character => {
+    blocks.forEach(block => block.writes.push(character));
+  };
+
+  for (let instructionI = 0; instructionI < instructions.length; instructionI += INSTRUCTION_BYTES) {
+    const type = instructions[instructionI];
     const offset = instructions[instructionI + 1];
     const value = instructions[instructionI + 2];
 
-    switch (instructions[instructionI]) {
-      case GOTO_IF_NOT_ZERO:
-        if (data[dataI + offset] !== 0) instructionI += value * INSTRUCTION_BYTES;
+    const pushNewBlock = () => {
+      blocks.push(
+        newBlock({
+          inputs: { [dataI + offset]: data[dataI + offset] },
+          instructions: makeInstructions(instructionI),
+        }),
+      );
+      return true;
+    };
+
+    const markReadData = () => {
+      blocks.forEach(block => {
+        // if first read for address
+        if (not(dataI + offset in block.inputs)) {
+          // store first read value
+          block.inputs[dataI + offset] = data[dataI + offset];
+        }
+      });
+    };
+
+    const markMutatedData = () => {
+      blocks.forEach(block => {
+        block.outputs[dataI + offset] = data[dataI + offset];
+      });
+    };
+
+    const markReadUserInput = () => {
+      blocks.forEach(block => {
+        block.reads = true;
+      });
+    };
+
+    switch (type) {
+      case ADD:
+        markReadData();
+        data[dataI + offset] += value;
+        markMutatedData();
         break;
 
       case MOVE:
         dataI += value;
         break;
 
-      case ADD:
-        data[dataI + offset] += value;
-        break;
-
-      case SET:
-        data[dataI + offset] = value;
-        break;
-
-      case TRANSFER:
-        data[dataI + offset + value] += data[dataI + offset] * 1;
-        data[dataI + offset] = 0;
-        break;
-
-      case TRANSFER_NEGATIVE:
-        data[dataI + offset + value] += data[dataI + offset] * -1;
-        data[dataI + offset] = 0;
-        break;
-
       case GOTO_IF_ZERO:
-        if (data[dataI + offset] === 0) instructionI += value * INSTRUCTION_BYTES;
-        break;
-
-      case MOVE_WHILE_NOT_ZERO:
-        while (data[dataI + offset] !== 0) {
-          dataI += value;
+        markReadData();
+        if (data[dataI + offset] === 0) {
+          instructionI += value * INSTRUCTION_BYTES;
+        } else {
+          if (!pushNewBlock()) {
+            instructionI += value * INSTRUCTION_BYTES;
+          }
         }
         break;
 
-      case OUTPUT:
-        write(String.fromCharCode(data[dataI + offset]));
+      case GOTO_IF_NOT_ZERO:
+        markReadData();
+        if (data[dataI + offset] !== 0) {
+          instructionI += value * INSTRUCTION_BYTES;
+        } else {
+          popBlock();
+        }
         break;
 
-      case SET_UNLESS_EVEN:
-        if (data[dataI + offset] % 2 === 0) throw new Error('Non-terminating loop!');
-        data[dataI + offset] = value;
+      case WRITE:
+        const character = String.fromCharCode(data[dataI + offset]);
+        markMutatedData();
+        write(character);
+        markPushedUserOutput(character);
         break;
 
-      case INPUT:
-        // note: readline returns undefined in non-interactive environments
+      case READ:
+        markReadData();
+        markReadUserInput();
+        blocks.forEach(block => block.writes.push(character));
+        // execute
         data[dataI + offset] = (readline() ?? '').charCodeAt(0);
         break;
 
       default:
-        throw new Error(`Unknown instruction: ${JSON.stringify(instructions[instructionI])}`);
+        throw new Error(`Unknown instruction: ${JSON.stringify(type)}`);
     }
   }
+
+  popBlock();
+
+  console.log('\nfinished blocks:', JSON.stringify(finishedBlocks, undefined, 2));
 };

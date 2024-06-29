@@ -1,6 +1,5 @@
 load('./src/codeToTokens.js');
 load('./src/tokensToNodes.js');
-load('./src/simplifyNodes.js');
 load('./src/nodesToString.js');
 load('./src/nodesToInstructions.js');
 load('./src/executeInstructions.js');
@@ -19,13 +18,9 @@ const nodes = tokensToNodes(tokens);
 const nodesTime = performance.now();
 // print(`NODES: ${JSON.stringify(nodes)}\n`);
 
-const simplifiedNodes = simplifyNodes(nodes);
-const simplifiedNodesTime = performance.now();
-// print(`SIMPLIFIED: ${JSON.stringify(simplifiedNodes)}\n`);
+// print(`PROGRAM:\n${nodesToString(nodes, 0)}\n`);
 
-// print(`PROGRAM:\n${nodesToString(simplifiedNodes, 0)}\n`);
-
-const instructions = nodesToInstructions(simplifiedNodes);
+const instructions = nodesToInstructions(nodes);
 const instructionsTime = performance.now();
 
 // print(`INSTRUCTIONS:\n${instructions}\n`);
@@ -36,8 +31,5 @@ const executeInstructionsTime = performance.now();
 print(`finished execution ${executeInstructionsTime}ms`);
 print(`\ntokens ${tokensTime}ms`);
 print(`nodes ${nodesTime - tokensTime}ms`);
-print(`simplification ${simplifiedNodesTime - nodesTime}ms`);
-print(`instructions ${instructionsTime - simplifiedNodesTime}ms`);
+print(`instructions ${instructionsTime - nodesTime}ms`);
 print(`execution ${performance.now() - instructionsTime}ms`);
-
-// writeFile('../working', nodesToString(simplifiedNodes, 0));
