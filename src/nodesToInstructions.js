@@ -1,5 +1,3 @@
-const has = property => property !== undefined;
-
 const ADD = 0;
 const MOVE = 1;
 const READ = 2;

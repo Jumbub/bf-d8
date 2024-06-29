@@ -11,19 +11,8 @@ const assertDefined = check => {
   }
 };
 
-/**
- * @type {{ key: string; startAddress: number; inputs: { [x: number]: number; }; outputs: {}; prints: string[]; }} Block
- */
-
-/**
- * @param {unknown} value
- */
 const not = value => !value;
 
-/**
- * @param {{startAddress: number, key: string}} value
- * @returns Block
- */
 const newBlock = ({ startAddress, key }) => {
   assertDefined([startAddress, key]);
   return {
@@ -40,17 +29,25 @@ const solvedBlock = ({ solvedBlocks, block }) => {
   if (!solvedBlocks[block.key]) {
     solvedBlocks[block.key] = [];
   }
-  solvedBlocks[block.key].push(block);
+  if (
+    solvedBlocks[block.key].some(existing => {
+      if (Object.entries(existing.inputs).every(([key, value]) => block.inputs[key] === value)) {
+        throw new Error('duplicate entry');
+      }
+    })
+  )
+    solvedBlocks[block.key].push({ inputs: block.inputs, outputs: block.outputs, prints: block.prints });
 };
 
 const makeBlockKey = ({ instructions, instructionI, stack = 0 }) => {
   assertDefined([instructions, instructionI, stack]);
   let is = '';
   for (; instructionI < instructions.length; instructionI += INSTRUCTION_BYTES) {
-    is +=
-      String(instructions[instructionI]).padStart(6) +
-      String(instructions[instructionI + 1]).padStart(6) +
-      String(instructions[instructionI + 2]).padStart(6);
+    is += [
+      String(instructions[instructionI]),
+      String(instructions[instructionI + 1]),
+      String(instructions[instructionI + 2]),
+    ].join(':');
     if (instructions[instructionI] === GOTO_IF_ZERO) {
       stack++;
     } else if (instructions[instructionI] === GOTO_IF_NOT_ZERO) {
@@ -132,6 +129,11 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
   let ii = 0;
   for (let instructionI = 0; instructionI < instructions.length; instructionI += INSTRUCTION_BYTES) {
     ii++;
+
+    if (ii % 1000 === 0) {
+      // console.log(JSON.stringify(inProgressBlocks));
+    }
+
     // console.log(JSON.stringify({ inProgressBlocks }));
     const type = instructions[instructionI];
     const offsetDataI = dataI + instructions[instructionI + 1];
@@ -177,6 +179,7 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
           instructionI += value * INSTRUCTION_BYTES;
         } else {
           solvedBlock({ solvedBlocks, block: inProgressBlocks.pop() });
+          // console.log(count(solvedBlocks), inProgressBlocks.length);
         }
         break;
       }
