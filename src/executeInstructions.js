@@ -2,44 +2,61 @@ load('./src/debugInstructions.js');
 
 const assertDefined = check => {
   if (typeof check === 'array') {
-    if (check.some(value => value === undefined)) {
+    if (check.some(value => value === undefined || value === null)) {
+      console.error('you messed up', JSON.stringify(check));
       throw new Error('you messed up');
     }
   }
   if (check === undefined) {
+    console.error('you messed up', JSON.stringify(check));
     throw new Error('you messed up');
   }
 };
 
 const not = value => !value;
 
-const newBlock = ({ startAddress, key }) => {
-  assertDefined([startAddress, key]);
+const newBlock = ({ inputs, key, inProgressDataI }) => {
+  assertDefined([inputs, key, inProgressDataI]);
   return {
+    inProgressDataI,
     key, // the unique key for this set of instructions
-    startAddress,
-    inputs: { [startAddress]: 0 }, // you can only start blocks if the value is 0 for the current address
+    inputs,
     outputs: {}, // the final values of addresses we've mutated
     prints: [], // the printed values
   };
 };
 
 const solvedBlock = ({ solvedBlocks, block }) => {
-  assertDefined(solvedBlock, block);
+  assertDefined([solvedBlock, block.key, block.inputs, block.outputs, block.prints]);
   if (!solvedBlocks[block.key]) {
     solvedBlocks[block.key] = [];
   }
-  if (
-    solvedBlocks[block.key].some(existing => {
-      if (Object.entries(existing.inputs).every(([key, value]) => block.inputs[key] === value)) {
-        throw new Error('duplicate entry');
-      }
-    })
-  )
-    solvedBlocks[block.key].push({ inputs: block.inputs, outputs: block.outputs, prints: block.prints });
+
+  const duplicateEntry = solvedBlocks[block.key].find(existing => {
+    return (
+      Object.entries(existing.inputs).every(([key, value]) => block.inputs[key] === value) &&
+      Object.entries(block.inputs).every(([key, value]) => existing.inputs[key] === value)
+    );
+  });
+  if (duplicateEntry) {
+    console.error(
+      JSON.stringify({
+        solveds: solvedBlocks[block.key].length,
+        duplicateEntry,
+        block,
+      }),
+    );
+    throw new Error('duplicate entry');
+  }
+  solvedBlocks[block.key].push({
+    inputs: block.inputs,
+    outputs: block.outputs,
+    prints: block.prints,
+  });
 };
 
 const makeBlockKey = ({ instructions, instructionI, stack = 0 }) => {
+  return instructionI;
   assertDefined([instructions, instructionI, stack]);
   let is = '';
   for (; instructionI < instructions.length; instructionI += INSTRUCTION_BYTES) {
@@ -47,7 +64,7 @@ const makeBlockKey = ({ instructions, instructionI, stack = 0 }) => {
       String(instructions[instructionI]),
       String(instructions[instructionI + 1]),
       String(instructions[instructionI + 2]),
-    ].join(':');
+    ].join(',');
     if (instructions[instructionI] === GOTO_IF_ZERO) {
       stack++;
     } else if (instructions[instructionI] === GOTO_IF_NOT_ZERO) {
@@ -60,24 +77,28 @@ const makeBlockKey = ({ instructions, instructionI, stack = 0 }) => {
   return is;
 };
 
-const findSolvedBlock = ({ solvedBlocks, blockKey, data, startAddress }) => {
-  assertDefined([solvedBlocks, blockKey, data, startAddress]);
-  for (const solvedBlock of solvedBlocks[blockKey] ?? []) {
-    const inputIsMatch = Object.entries(inputs).every(
-      ([relativeOffset, expectedValue]) => data[startAddress + Number(relativeOffset)] === expectedValue,
-    );
-    if (inputIsMatch) {
-      // console.log('omg skipped block!', count(), performance.now());
-      return solvedBlock;
-    }
-  }
-  return null;
+const findSolvedBlock = ({ solvedBlocks, blockKey, data, dataI }) => {
+  assertDefined([solvedBlocks ?? null, blockKey ?? null, data ?? null, dataI ?? null]);
+  return (solvedBlocks[blockKey] ?? []).find(compare =>
+    Object.entries(compare.inputs).every(([relativeOffsetString, expectedValue]) => {
+      const relativeI = Number(relativeOffsetString);
+      const absoluteI = dataI + relativeI;
+      if (isNaN(relativeI) || isNaN(absoluteI) || isNaN(expectedValue) || data[absoluteI] === undefined) {
+        if (absoluteI < 0 || absoluteI >= 30000) {
+          console.error('out of bounds');
+        }
+        // console.log(JSON.stringify({ relativeI, absoluteI, expectedValue, d: data[absoluteI] ?? '?' }));
+        // throw new Error('bad!');
+      }
+      return data[absoluteI] === expectedValue;
+    }),
+  );
 };
 
-const executeSolvedBlock = ({ block: { outputs, prints }, data, startAddress }) => {
-  assertDefined([outputs, prints, data, startAddress]);
+const executeSolvedBlock = ({ block: { outputs, prints }, data, dataI }) => {
+  assertDefined([outputs, prints, data, dataI]);
   for (const [relativeOffset, value] of Object.entries(outputs)) {
-    data[startAddress + Number(relativeOffset)] = value;
+    data[dataI + Number(relativeOffset)] = value;
   }
   prints.forEach(value => write(value));
 };
@@ -92,20 +113,24 @@ const printData = ({ inProgressBlocks, data, dataI }) => {
 
 const getData = ({ inProgressBlocks, data, dataI }) => {
   assertDefined([inProgressBlocks, data, dataI]);
+  if (data[dataI] === undefined) {
+    throw new Error('ran out of tape');
+  }
   const value = data[dataI];
   inProgressBlocks.forEach(block => {
-    const relativeAddress = dataI - block.startAddress;
+    const relativeAddress = dataI - block.inProgressDataI;
     if (block.inputs[relativeAddress] == undefined) {
       block.inputs[relativeAddress] = value;
     }
   });
+  assertDefined(value);
   return value;
 };
 
 const setData = ({ inProgressBlocks, data, dataI, value }) => {
   assertDefined([inProgressBlocks, data, dataI, value]);
   inProgressBlocks.forEach(block => {
-    block.outputs[dataI - block.startAddress] = value;
+    block.outputs[dataI - block.inProgressDataI] = value;
   });
   data[dataI] = value;
 };
@@ -113,27 +138,21 @@ const setData = ({ inProgressBlocks, data, dataI, value }) => {
 const count = blocks => Object.entries(blocks).reduce((acc, value) => acc + value.length, 0);
 
 const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
-  let data = new DATA_TYPE(DATA_LENGTH);
-  let dataI = 0;
+  let RAW_DATA = new DATA_TYPE(100000);
+  let dataI = 50000;
 
   let solvedBlocks = {};
   let inProgressBlocks = [];
 
   inProgressBlocks.push(
     newBlock({
+      inputs: { 0: 0 },
+      inProgressDataI: 0,
       key: makeBlockKey({ instructions, instructionI: 0, stack: 1 }),
-      startAddress: 0,
     }),
   );
 
-  let ii = 0;
   for (let instructionI = 0; instructionI < instructions.length; instructionI += INSTRUCTION_BYTES) {
-    ii++;
-
-    if (ii % 1000 === 0) {
-      // console.log(JSON.stringify(inProgressBlocks));
-    }
-
     // console.log(JSON.stringify({ inProgressBlocks }));
     const type = instructions[instructionI];
     const offsetDataI = dataI + instructions[instructionI + 1];
@@ -144,9 +163,9 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
       case ADD:
         setData({
           inProgressBlocks,
-          data,
+          data: RAW_DATA,
           dataI: offsetDataI,
-          value: getData({ inProgressBlocks, data, dataI: offsetDataI }) + value,
+          value: getData({ inProgressBlocks, data: RAW_DATA, dataI: offsetDataI }) + value,
         });
         break;
 
@@ -155,19 +174,29 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
         break;
 
       case GOTO_IF_ZERO: {
-        if (getData({ inProgressBlocks, data, dataI: offsetDataI }) === 0) {
+        const startValue = getData({ inProgressBlocks, data: RAW_DATA, dataI: offsetDataI });
+        if (startValue === 0) {
           instructionI += value * INSTRUCTION_BYTES;
           break;
         }
-        const matchingBlock = findSolvedBlock({ solvedBlocks, data, startAddress: dataI });
-        // console.log(JSON.stringify({ matchingBlock }));
+        const blockKey = makeBlockKey({ instructions, instructionI });
+        // console.log(blockKey);
+        const matchingBlock = findSolvedBlock({ solvedBlocks, blockKey, data: RAW_DATA, dataI });
+        // console.log(matchingBlock);
+        // console.log(JSON.stringify({ blockKey, matchingBlock }));
         if (matchingBlock) {
-          executeSolvedBlock({ block: matchingBlock, data, startAddress: dataI });
+          executeSolvedBlock({ block: matchingBlock, data: RAW_DATA, dataI });
+          instructionI += value * INSTRUCTION_BYTES;
+          break;
         } else {
+          if (inProgressBlocks.some(b => b.key === blockKey)) {
+            throw new Error('impossible');
+          }
           inProgressBlocks.push(
             newBlock({
-              key: makeBlockKey({ instructions, instructionI }),
-              startAddress: dataI,
+              inputs: { [offsetDataI - dataI]: startValue },
+              inProgressDataI: dataI,
+              key: blockKey,
             }),
           );
         }
@@ -175,17 +204,16 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
       }
 
       case GOTO_IF_NOT_ZERO: {
-        if (getData({ inProgressBlocks, data, dataI: offsetDataI }) !== 0) {
+        if (getData({ inProgressBlocks, data: RAW_DATA, dataI: offsetDataI }) !== 0) {
           instructionI += value * INSTRUCTION_BYTES;
         } else {
           solvedBlock({ solvedBlocks, block: inProgressBlocks.pop() });
-          // console.log(count(solvedBlocks), inProgressBlocks.length);
         }
         break;
       }
 
       case WRITE: {
-        printData({ inProgressBlocks, data, dataI: offsetDataI });
+        printData({ inProgressBlocks, data: RAW_DATA, dataI: offsetDataI });
         break;
       }
 
