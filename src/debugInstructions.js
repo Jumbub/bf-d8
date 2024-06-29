@@ -13,12 +13,12 @@ const debugInstructionsWarningStatefulFunction = (data, dataI, instruction) => {
       print(`${prefix}MOVE ${value}`);
       break;
 
-    case OUTPUT:
-      print(`${offsetPrefix} OUTPUT`);
+    case WRITE:
+      print(`${offsetPrefix} WRITE`);
       break;
 
-    case INPUT:
-      print(`${offsetPrefix} INPUT`);
+    case READ:
+      print(`${offsetPrefix} READ`);
       break;
 
     case GOTO_IF_ZERO:

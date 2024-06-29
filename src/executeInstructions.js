@@ -1,163 +1,188 @@
 load('./src/debugInstructions.js');
 
+const assertDefined = check => {
+  if (typeof check === 'array') {
+    if (check.some(value => value === undefined)) {
+      throw new Error('you messed up');
+    }
+  }
+  if (check === undefined) {
+    throw new Error('you messed up');
+  }
+};
+
+/**
+ * @type {{ key: string; startAddress: number; inputs: { [x: number]: number; }; outputs: {}; prints: string[]; }} Block
+ */
+
+/**
+ * @param {unknown} value
+ */
 const not = value => !value;
-const missing = property => property !== undefined;
-const newBlock = value => ({
-  offset: value.offset,
-  inputs: value.inputs, // the initial values of addresses we've read
-  outputs: {}, // the final values of addresses we've mutated
-  writes: [], // the printed values
-  reads: [],
-  instructions: value.instructions, // the instructions
-});
+
+/**
+ * @param {{startAddress: number, key: string}} value
+ * @returns Block
+ */
+const newBlock = ({ startAddress, key }) => {
+  assertDefined([startAddress, key]);
+  return {
+    key, // the unique key for this set of instructions
+    startAddress,
+    inputs: { [startAddress]: 0 }, // you can only start blocks if the value is 0 for the current address
+    outputs: {}, // the final values of addresses we've mutated
+    prints: [], // the printed values
+  };
+};
+
+const solvedBlock = ({ solvedBlocks, block }) => {
+  assertDefined(solvedBlock, block);
+  if (!solvedBlocks[block.key]) {
+    solvedBlocks[block.key] = [];
+  }
+  solvedBlocks[block.key].push(block);
+};
+
+const makeBlockKey = ({ instructions, instructionI, stack = 0 }) => {
+  assertDefined([instructions, instructionI, stack]);
+  let is = '';
+  for (; instructionI < instructions.length; instructionI += INSTRUCTION_BYTES) {
+    is +=
+      String(instructions[instructionI]).padStart(6) +
+      String(instructions[instructionI + 1]).padStart(6) +
+      String(instructions[instructionI + 2]).padStart(6);
+    if (instructions[instructionI] === GOTO_IF_ZERO) {
+      stack++;
+    } else if (instructions[instructionI] === GOTO_IF_NOT_ZERO) {
+      stack--;
+    }
+    if (stack === 0) {
+      return is;
+    }
+  }
+  return is;
+};
+
+const findSolvedBlock = ({ solvedBlocks, blockKey, data, startAddress }) => {
+  assertDefined([solvedBlocks, blockKey, data, startAddress]);
+  for (const solvedBlock of solvedBlocks[blockKey] ?? []) {
+    const inputIsMatch = Object.entries(inputs).every(
+      ([relativeOffset, expectedValue]) => data[startAddress + Number(relativeOffset)] === expectedValue,
+    );
+    if (inputIsMatch) {
+      // console.log('omg skipped block!', count(), performance.now());
+      return solvedBlock;
+    }
+  }
+  return null;
+};
+
+const executeSolvedBlock = ({ block: { outputs, prints }, data, startAddress }) => {
+  assertDefined([outputs, prints, data, startAddress]);
+  for (const [relativeOffset, value] of Object.entries(outputs)) {
+    data[startAddress + Number(relativeOffset)] = value;
+  }
+  prints.forEach(value => write(value));
+};
+
+const printData = ({ inProgressBlocks, data, dataI }) => {
+  assertDefined([inProgressBlocks, data, dataI]);
+  // console.log(JSON.stringify({ inProgressBlocks, data, dataI }));
+  const character = String.fromCharCode(getData({ inProgressBlocks, data, dataI }));
+  inProgressBlocks.forEach(block => block.prints.push(character));
+  write(character);
+};
+
+const getData = ({ inProgressBlocks, data, dataI }) => {
+  assertDefined([inProgressBlocks, data, dataI]);
+  const value = data[dataI];
+  inProgressBlocks.forEach(block => {
+    const relativeAddress = dataI - block.startAddress;
+    if (block.inputs[relativeAddress] == undefined) {
+      block.inputs[relativeAddress] = value;
+    }
+  });
+  return value;
+};
+
+const setData = ({ inProgressBlocks, data, dataI, value }) => {
+  assertDefined([inProgressBlocks, data, dataI, value]);
+  inProgressBlocks.forEach(block => {
+    block.outputs[dataI - block.startAddress] = value;
+  });
+  data[dataI] = value;
+};
+
+const count = blocks => Object.entries(blocks).reduce((acc, value) => acc + value.length, 0);
 
 const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
   let data = new DATA_TYPE(DATA_LENGTH);
   let dataI = 0;
 
-  let finishedBlocks = {};
-  let blocks = [];
+  let solvedBlocks = {};
+  let inProgressBlocks = [];
 
-  const makeInstructions = (instructionI, stack = 0) => {
-    let is = '';
-    for (; instructionI < instructions.length; instructionI += INSTRUCTION_BYTES) {
-      is += String(instructions[instructionI]);
-      if (instructions[instructionI] === GOTO_IF_ZERO) {
-        stack++;
-      } else if (instructions[instructionI] === GOTO_IF_NOT_ZERO) {
-        stack--;
-      }
-      if (stack === 0) {
-        return is;
-      }
-    }
-    return is;
-  };
-
-  blocks.push(
+  inProgressBlocks.push(
     newBlock({
-      offset: 0,
-      inputs: { 0: 0 },
-      instructions: makeInstructions(0, 1),
+      key: makeBlockKey({ instructions, instructionI: 0, stack: 1 }),
+      startAddress: 0,
     }),
   );
 
-  const popBlock = () => {
-    if (blocks.length == 0) {
-      throw new Error(`Bad number of blocks remaining: ${blocks.length}`);
-    }
-    const block = blocks.pop();
-    if (block.reads.length > 0) {
-      // throw away
-    } else {
-      finishedBlocks[block.instructions] = finishedBlocks[block.instructions] ?? [];
-      finishedBlocks[block.instructions].push(block);
-    }
-  };
-
-  const markPushedUserOutput = character => {
-    blocks.forEach(block => block.writes.push(character));
-  };
-
-  const markPushedUserInput = character => {
-    blocks.forEach(block => block.inputs.push(character));
-  };
-
+  let ii = 0;
   for (let instructionI = 0; instructionI < instructions.length; instructionI += INSTRUCTION_BYTES) {
+    ii++;
+    // console.log(JSON.stringify({ inProgressBlocks }));
     const type = instructions[instructionI];
-    const offset = instructions[instructionI + 1];
+    const offsetDataI = dataI + instructions[instructionI + 1];
     const value = instructions[instructionI + 2];
-
-    const pushNewBlock = () => {
-      const instructions = makeInstructions(instructionI);
-
-      if (instructions in finishedBlocks) {
-        for (const { inputs, outputs, writes } of finishedBlocks[instructions]) {
-          if (Object.entries(inputs).every(([key, value]) => data[dataI + Number(key)] === value)) {
-            console.log('value!', performance.now());
-            for (const [key, value] of Object.entries(outputs)) {
-              data[dataI + Number(key)] = value;
-            }
-            writes.forEach(value => write(value));
-            return false;
-          }
-        }
-      }
-
-      const blockOffset = dataI;
-      const dataAddress = dataI + offset;
-      const relativeDataAddress = dataAddress - blockOffset;
-      blocks.push(
-        newBlock({
-          offset: blockOffset,
-          inputs: { [relativeDataAddress]: data[dataAddress] },
-          instructions,
-        }),
-      );
-      console.log('pushed', performance.now());
-      return true;
-    };
-
-    const markReadData = () => {
-      blocks.forEach(block => {
-        const dataAddress = dataI + offset;
-        const relativeDataAddress = dataAddress - block.offset;
-        // if first read for address
-        if (not(relativeDataAddress in block.inputs)) {
-          // store first read value
-          block.inputs[relativeDataAddress] = data[dataAddress];
-        }
-      });
-    };
-
-    const markMutatedData = () => {
-      blocks.forEach(block => {
-        const dataAddress = dataI + offset;
-        const relativeDataAddress = dataAddress - block.offset;
-        block.outputs[relativeDataAddress] = data[dataAddress];
-      });
-    };
+    // console.log(debugInstructionsWarningStatefulFunction(data, dataI, [type, instructions[instructionI + 1], value]));
 
     switch (type) {
       case ADD:
-        markReadData();
-        data[dataI + offset] += value;
-        markMutatedData();
+        setData({
+          inProgressBlocks,
+          data,
+          dataI: offsetDataI,
+          value: getData({ inProgressBlocks, data, dataI: offsetDataI }) + value,
+        });
         break;
 
       case MOVE:
         dataI += value;
         break;
 
-      case GOTO_IF_ZERO:
-        markReadData();
-        if (data[dataI + offset] === 0 || !pushNewBlock()) {
+      case GOTO_IF_ZERO: {
+        if (getData({ inProgressBlocks, data, dataI: offsetDataI }) === 0) {
           instructionI += value * INSTRUCTION_BYTES;
+          break;
         }
-        break;
-
-      case GOTO_IF_NOT_ZERO:
-        markReadData();
-        if (data[dataI + offset] !== 0) {
-          instructionI += value * INSTRUCTION_BYTES;
+        const matchingBlock = findSolvedBlock({ solvedBlocks, data, startAddress: dataI });
+        // console.log(JSON.stringify({ matchingBlock }));
+        if (matchingBlock) {
+          executeSolvedBlock({ block: matchingBlock, data, startAddress: dataI });
         } else {
-          popBlock();
+          inProgressBlocks.push(
+            newBlock({
+              key: makeBlockKey({ instructions, instructionI }),
+              startAddress: dataI,
+            }),
+          );
         }
-        break;
-
-      case WRITE: {
-        const character = String.fromCharCode(data[dataI + offset]);
-        markMutatedData();
-        write(character);
-        markPushedUserOutput(character);
         break;
       }
 
-      case READ: {
-        const character = (readline() ?? '').charCodeAt(0);
-        markReadData();
-        data[dataI + offset] = character;
-        markPushedUserInput(character);
+      case GOTO_IF_NOT_ZERO: {
+        if (getData({ inProgressBlocks, data, dataI: offsetDataI }) !== 0) {
+          instructionI += value * INSTRUCTION_BYTES;
+        } else {
+          solvedBlock({ solvedBlocks, block: inProgressBlocks.pop() });
+        }
+        break;
+      }
+
+      case WRITE: {
+        printData({ inProgressBlocks, data, dataI: offsetDataI });
         break;
       }
 
@@ -166,7 +191,6 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
     }
   }
 
-  popBlock();
-
-  console.log('\nfinished blocks:', JSON.stringify(finishedBlocks, undefined, 2));
+  solvedBlock({ solvedBlocks, block: inProgressBlocks.pop() });
+  // console.log('\nfinished blocks:', JSON.stringify(solvedBlocks, undefined, 2));
 };
