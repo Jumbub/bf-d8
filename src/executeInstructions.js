@@ -1,65 +1,53 @@
 load('./src/debugInstructions.js');
 
-const assertDefined = check => {
-  if (typeof check === 'array') {
-    if (check.some(value => value === undefined || value === null)) {
-      console.error('you messed up', JSON.stringify(check));
-      throw new Error('you messed up');
-    }
-  }
-  if (check === undefined) {
-    console.error('you messed up', JSON.stringify(check));
-    throw new Error('you messed up');
-  }
-};
-
 const not = value => !value;
 
 const newBlock = ({ inputs, key, startingI }) => {
-  assertDefined([inputs, key, startingI]);
   return {
     startingI,
     key, // the unique key for this set of instructions
     inputs,
-    outputs: {}, // the final values of addresses we've mutated
-    prints: [], // the printed values
+    outputs: new Map(), // the final values of addresses we've mutated
+    prints: new Array(0), // the printed values
     move: 0, // relative position of final I
   };
 };
 
 const solvedBlock = ({ solvedBlocks, block }) => {
-  assertDefined([solvedBlock, block.key, block.inputs, block.outputs, block.prints]);
-  if (!solvedBlocks[block.key]) {
-    solvedBlocks[block.key] = [];
+  if (!solvedBlocks.has(block.key)) {
+    solvedBlocks.set(block.key, new Array(0));
   }
 
-  const duplicateEntry = solvedBlocks[block.key].find(existing => {
-    return (
-      Object.entries(existing.inputs).every(([key, value]) => block.inputs[key] === value) &&
-      Object.entries(block.inputs).every(([key, value]) => existing.inputs[key] === value)
-    );
-  });
-  if (duplicateEntry) {
-    console.error(
-      JSON.stringify({
-        solveds: solvedBlocks[block.key].length,
-        duplicateEntry,
-        block,
-      }),
-    );
-    throw new Error('duplicate entry');
-  }
-  solvedBlocks[block.key].push({
+  // TODO: remove for real perf
+  // const duplicateEntry = solvedBlocks.get(block.key).find(existing => {
+  //   return (
+  //     Object.entries(existing.inputs).every(([key, value]) => block.inputs[key] === value) &&
+  //     Object.entries(block.inputs).every(([key, value]) => existing.inputs[key] === value)
+  //   );
+  // });
+  // if (duplicateEntry) {
+  //   console.error(
+  //     JSON.stringify({
+  //       solveds: solvedBlocks.get(block.key).length,
+  //       duplicateEntry,
+  //       block,
+  //     }),
+  //   );
+  //   throw new Error('duplicate entry');
+  // }
+
+  const existing = solvedBlocks.get(block.key);
+  existing.push({
     inputs: block.inputs,
     outputs: block.outputs,
     prints: block.prints,
     move: block.move,
   });
+  solvedBlocks.set(block.key, existing);
 };
 
 const makeBlockKey = ({ instructions, instructionI, stack = 0 }) => {
   // return instructionI;
-  assertDefined([instructions, instructionI, stack]);
   let is = '';
   for (; instructionI < instructions.length; instructionI += INSTRUCTION_BYTES) {
     is +=
@@ -80,9 +68,9 @@ const makeBlockKey = ({ instructions, instructionI, stack = 0 }) => {
   return is;
 };
 
+const EMPTY = [];
 const findSolvedBlock = ({ solvedBlocks, blockKey, data, dataI }) => {
-  assertDefined([solvedBlocks ?? null, blockKey ?? null, data ?? null, dataI ?? null]);
-  return (solvedBlocks[blockKey] ?? []).find(compare =>
+  return solvedBlocks.get(blockKey)?.find(compare =>
     Object.entries(compare.inputs).every(([relativeOffsetString, expectedValue]) => {
       const relativeI = Number(relativeOffsetString);
       const absoluteI = dataI + relativeI;
@@ -98,8 +86,9 @@ const findSolvedBlock = ({ solvedBlocks, blockKey, data, dataI }) => {
   );
 };
 
+const display = console.log;
+
 const executeSolvedBlock = ({ block: { outputs, prints, inputs, move }, inProgressBlocks, data, dataPointer }) => {
-  assertDefined([outputs, prints, data, dataPointer.dataI]);
   for (const [offsetString, value] of Object.entries(inputs)) {
     const absoluteI = dataPointer.dataI + Number(offsetString);
     inProgressBlocks.forEach(block => {
@@ -109,27 +98,25 @@ const executeSolvedBlock = ({ block: { outputs, prints, inputs, move }, inProgre
       }
     });
   }
-  for (const [offsetString, value] of Object.entries(outputs)) {
+  for (const [offsetString, value] of outputs.entries()) {
     setData({ inProgressBlocks, data, dataI: dataPointer.dataI + Number(offsetString), value });
   }
   prints.forEach(character => {
     inProgressBlocks.forEach(block => block.prints.push(character));
-    write(character);
+    display(character);
   });
   inProgressBlocks.forEach(block => (block.move += move));
   dataPointer.dataI += move;
 };
 
 const printData = ({ inProgressBlocks, data, dataI }) => {
-  assertDefined([inProgressBlocks, data, dataI]);
   // console.log(JSON.stringify({ inProgressBlocks, data, dataI }));
   const character = String.fromCharCode(getData({ inProgressBlocks, data, dataI }));
   inProgressBlocks.forEach(block => block.prints.push(character));
-  write(character);
+  display(character);
 };
 
 const getData = ({ inProgressBlocks, data, dataI }) => {
-  assertDefined([inProgressBlocks, data, dataI]);
   if (data[dataI] === undefined) {
     throw new Error('ran out of tape');
   }
@@ -140,12 +127,10 @@ const getData = ({ inProgressBlocks, data, dataI }) => {
       block.inputs[relativeAddress] = value;
     }
   });
-  assertDefined(value);
   return value;
 };
 
 const moveDataPointer = ({ inProgressBlocks, movement, dataPointer }) => {
-  assertDefined([inProgressBlocks, movement ?? null]);
   inProgressBlocks.forEach(block => {
     block.move += movement;
   });
@@ -153,23 +138,25 @@ const moveDataPointer = ({ inProgressBlocks, movement, dataPointer }) => {
 };
 
 const setData = ({ inProgressBlocks, data, dataI, value }) => {
-  assertDefined([inProgressBlocks, data, dataI, value]);
   inProgressBlocks.forEach(block => {
-    block.outputs[dataI - block.startingI] = value;
+    block.outputs.set(dataI - block.startingI, value);
   });
   data[dataI] = value;
 };
 
-const count = blocks =>
-  Object.entries(blocks).reduce((acc, [, value]) => {
-    return acc + value.length;
-  }, 0);
+const count = blocks => {
+  let c = 0;
+  for (const [key, value] of blocks) {
+    c += value.length;
+  }
+  return c;
+};
 
 const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
   let RAW_DATA = new DATA_TYPE(DATA_LENGTH);
   let DATA_POINTER = { dataI: 0 };
 
-  let solvedBlocks = {};
+  let solvedBlocks = new Map();
   let inProgressBlocks = [];
 
   inProgressBlocks.push(
@@ -181,6 +168,8 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
   );
 
   for (let instructionI = 0; instructionI < instructions.length; instructionI += INSTRUCTION_BYTES) {
+    // console.log(count(solvedBlocks));
+
     // console.log(JSON.stringify({ inProgressBlocks }));
     const type = instructions[instructionI];
     const offsetDataI = DATA_POINTER.dataI + instructions[instructionI + 1];

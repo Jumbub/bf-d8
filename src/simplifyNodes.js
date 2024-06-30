@@ -52,7 +52,7 @@ const simplifyNodes = allNodes => {
           // Technically this could break non-terminating apps, so store a non-termination check.
           const inner = node.whileNotZero[0];
           simple = [{ set: 0, offset: inner.offset, nonTerminatingIfEven: !inner.add }];
-        } else if (false && node.whileNotZero) {
+        } else if (node.whileNotZero) {
           // [...] => [(simplified ...)]
           const simplified = simplifyNodes(node.whileNotZero);
           if (simplified !== node.whileNotZero) simple = [{ offset: node.offset, whileNotZero: simplified }];
