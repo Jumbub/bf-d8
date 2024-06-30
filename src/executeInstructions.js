@@ -15,10 +15,10 @@ const assertDefined = check => {
 
 const not = value => !value;
 
-const newBlock = ({ inputs, key, inProgressDataI }) => {
-  assertDefined([inputs, key, inProgressDataI]);
+const newBlock = ({ inputs, key, startingI }) => {
+  assertDefined([inputs, key, startingI]);
   return {
-    inProgressDataI,
+    startingI,
     key, // the unique key for this set of instructions
     inputs,
     outputs: {}, // the final values of addresses we've mutated
@@ -100,21 +100,23 @@ const findSolvedBlock = ({ solvedBlocks, blockKey, data, dataI }) => {
 
 const executeSolvedBlock = ({ block: { outputs, prints, inputs, move }, inProgressBlocks, data, dataPointer }) => {
   assertDefined([outputs, prints, data, dataPointer.dataI]);
-  for (const [relativeOffset, value] of Object.entries(inputs)) {
+  for (const [offsetString, value] of Object.entries(inputs)) {
+    const absoluteI = dataPointer.dataI + Number(offsetString);
     inProgressBlocks.forEach(block => {
-      const absoluteAddress = Number(block.inProgressDataI) + Number(relativeOffset);
-      if (block.inputs[absoluteAddress] == undefined) {
-        block.inputs[absoluteAddress] = value;
+      const relativeI = absoluteI - block.startingI;
+      if (block.inputs[relativeI] == undefined) {
+        block.inputs[relativeI] = value;
       }
     });
   }
-  for (const [relativeOffset, value] of Object.entries(outputs)) {
-    setData({ inProgressBlocks, data, dataI: dataPointer.dataI + Number(relativeOffset), value });
+  for (const [offsetString, value] of Object.entries(outputs)) {
+    setData({ inProgressBlocks, data, dataI: dataPointer.dataI + Number(offsetString), value });
   }
   prints.forEach(character => {
     inProgressBlocks.forEach(block => block.prints.push(character));
     write(character);
   });
+  inProgressBlocks.forEach(block => (block.move += move));
   dataPointer.dataI += move;
 };
 
@@ -133,7 +135,7 @@ const getData = ({ inProgressBlocks, data, dataI }) => {
   }
   const value = data[dataI];
   inProgressBlocks.forEach(block => {
-    const relativeAddress = dataI - block.inProgressDataI;
+    const relativeAddress = dataI - block.startingI;
     if (block.inputs[relativeAddress] == undefined) {
       block.inputs[relativeAddress] = value;
     }
@@ -153,7 +155,7 @@ const moveDataPointer = ({ inProgressBlocks, movement, dataPointer }) => {
 const setData = ({ inProgressBlocks, data, dataI, value }) => {
   assertDefined([inProgressBlocks, data, dataI, value]);
   inProgressBlocks.forEach(block => {
-    block.outputs[dataI - block.inProgressDataI] = value;
+    block.outputs[dataI - block.startingI] = value;
   });
   data[dataI] = value;
 };
@@ -173,7 +175,7 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
   inProgressBlocks.push(
     newBlock({
       inputs: { 0: 0 },
-      inProgressDataI: 0,
+      startingI: 0,
       key: makeBlockKey({ instructions, instructionI: 0, stack: 1 }),
     }),
   );
@@ -221,7 +223,7 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
           inProgressBlocks.push(
             newBlock({
               inputs: { [offsetDataI - DATA_POINTER.dataI]: startValue },
-              inProgressDataI: DATA_POINTER.dataI,
+              startingI: DATA_POINTER.dataI,
               key: blockKey,
             }),
           );
