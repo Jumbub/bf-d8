@@ -1,6 +1,7 @@
 const has = property => property !== undefined;
 
 const simplifyNodes = allNodes => {
+  // return allNodes;
   for (let size = 1; size <= allNodes.length; size++) {
     for (let offset = 0; offset <= allNodes.length - size; offset++) {
       const nodes = allNodes.slice(offset, offset + size);
@@ -9,10 +10,10 @@ const simplifyNodes = allNodes => {
       if (nodes.length === 1) {
         const [node] = nodes;
 
-        if (node.move === 0) {
+        if (false && node.move === 0) {
           // >< => nothing
           simple = [];
-        } else if (node.add === 0) {
+        } else if (false && node.add === 0) {
           // +- => nothing
           simple = [];
         } else if (false && node.whileNotZero?.length === 1 && node.whileNotZero[0].move) {
@@ -62,10 +63,10 @@ const simplifyNodes = allNodes => {
         if (left.add && right.add && left.offset === right.offset) {
           // +- => (add 1-1)
           simple = [{ offset: left.offset, add: left.add + right.add }];
-        } else if (left.move && right.move) {
+        } else if (false && left.move && right.move) {
           // >< => (move 1-1)
           simple = [{ move: left.move + right.move }];
-        } else if (left.move && right.offset !== undefined) {
+        } else if (false && left.move && right.offset !== undefined) {
           // >+ => (add 1 offset 1),(move 1)
           simple = [{ ...right, offset: left.move + right.offset }, { move: left.move + right.offset }];
         } else if (false && left.set !== undefined && right.add !== undefined && left.offset === right.offset) {

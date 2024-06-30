@@ -23,6 +23,7 @@ const newBlock = ({ inputs, key, inProgressDataI }) => {
     inputs,
     outputs: {}, // the final values of addresses we've mutated
     prints: [], // the printed values
+    move: 0, // relative position of final I
   };
 };
 
@@ -52,19 +53,21 @@ const solvedBlock = ({ solvedBlocks, block }) => {
     inputs: block.inputs,
     outputs: block.outputs,
     prints: block.prints,
+    move: block.move,
   });
 };
 
 const makeBlockKey = ({ instructions, instructionI, stack = 0 }) => {
-  return instructionI;
+  // return instructionI;
   assertDefined([instructions, instructionI, stack]);
   let is = '';
   for (; instructionI < instructions.length; instructionI += INSTRUCTION_BYTES) {
-    is += [
-      String(instructions[instructionI]),
-      String(instructions[instructionI + 1]),
-      String(instructions[instructionI + 2]),
-    ].join(',');
+    is +=
+      [
+        String(instructions[instructionI]),
+        String(instructions[instructionI + 1]),
+        String(instructions[instructionI + 2]),
+      ].join(',') + ',';
     if (instructions[instructionI] === GOTO_IF_ZERO) {
       stack++;
     } else if (instructions[instructionI] === GOTO_IF_NOT_ZERO) {
@@ -87,20 +90,32 @@ const findSolvedBlock = ({ solvedBlocks, blockKey, data, dataI }) => {
         if (absoluteI < 0 || absoluteI >= 30000) {
           console.error('out of bounds');
         }
-        // console.log(JSON.stringify({ relativeI, absoluteI, expectedValue, d: data[absoluteI] ?? '?' }));
-        // throw new Error('bad!');
+        console.log(JSON.stringify({ relativeI, absoluteI, expectedValue, d: data[absoluteI] ?? '?' }));
+        throw new Error('bad!');
       }
       return data[absoluteI] === expectedValue;
     }),
   );
 };
 
-const executeSolvedBlock = ({ block: { outputs, prints }, data, dataI }) => {
-  assertDefined([outputs, prints, data, dataI]);
-  for (const [relativeOffset, value] of Object.entries(outputs)) {
-    data[dataI + Number(relativeOffset)] = value;
+const executeSolvedBlock = ({ block: { outputs, prints, inputs, move }, inProgressBlocks, data, dataPointer }) => {
+  assertDefined([outputs, prints, data, dataPointer.dataI]);
+  for (const [relativeOffset, value] of Object.entries(inputs)) {
+    inProgressBlocks.forEach(block => {
+      const absoluteAddress = Number(block.inProgressDataI) + Number(relativeOffset);
+      if (block.inputs[absoluteAddress] == undefined) {
+        block.inputs[absoluteAddress] = value;
+      }
+    });
   }
-  prints.forEach(value => write(value));
+  for (const [relativeOffset, value] of Object.entries(outputs)) {
+    setData({ inProgressBlocks, data, dataI: dataPointer.dataI + Number(relativeOffset), value });
+  }
+  prints.forEach(character => {
+    inProgressBlocks.forEach(block => block.prints.push(character));
+    write(character);
+  });
+  dataPointer.dataI += move;
 };
 
 const printData = ({ inProgressBlocks, data, dataI }) => {
@@ -127,6 +142,14 @@ const getData = ({ inProgressBlocks, data, dataI }) => {
   return value;
 };
 
+const moveDataPointer = ({ inProgressBlocks, movement, dataPointer }) => {
+  assertDefined([inProgressBlocks, movement ?? null]);
+  inProgressBlocks.forEach(block => {
+    block.move += movement;
+  });
+  dataPointer.dataI += movement;
+};
+
 const setData = ({ inProgressBlocks, data, dataI, value }) => {
   assertDefined([inProgressBlocks, data, dataI, value]);
   inProgressBlocks.forEach(block => {
@@ -135,11 +158,14 @@ const setData = ({ inProgressBlocks, data, dataI, value }) => {
   data[dataI] = value;
 };
 
-const count = blocks => Object.entries(blocks).reduce((acc, value) => acc + value.length, 0);
+const count = blocks =>
+  Object.entries(blocks).reduce((acc, [, value]) => {
+    return acc + value.length;
+  }, 0);
 
 const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
-  let RAW_DATA = new DATA_TYPE(100000);
-  let dataI = 50000;
+  let RAW_DATA = new DATA_TYPE(DATA_LENGTH);
+  let DATA_POINTER = { dataI: 0 };
 
   let solvedBlocks = {};
   let inProgressBlocks = [];
@@ -155,7 +181,7 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
   for (let instructionI = 0; instructionI < instructions.length; instructionI += INSTRUCTION_BYTES) {
     // console.log(JSON.stringify({ inProgressBlocks }));
     const type = instructions[instructionI];
-    const offsetDataI = dataI + instructions[instructionI + 1];
+    const offsetDataI = DATA_POINTER.dataI + instructions[instructionI + 1];
     const value = instructions[instructionI + 2];
     // console.log(debugInstructionsWarningStatefulFunction(data, dataI, [type, instructions[instructionI + 1], value]));
 
@@ -170,7 +196,7 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
         break;
 
       case MOVE:
-        dataI += value;
+        moveDataPointer({ inProgressBlocks, movement: value, dataPointer: DATA_POINTER });
         break;
 
       case GOTO_IF_ZERO: {
@@ -181,11 +207,11 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
         }
         const blockKey = makeBlockKey({ instructions, instructionI });
         // console.log(blockKey);
-        const matchingBlock = findSolvedBlock({ solvedBlocks, blockKey, data: RAW_DATA, dataI });
+        const matchingBlock = findSolvedBlock({ solvedBlocks, blockKey, data: RAW_DATA, dataI: DATA_POINTER.dataI });
         // console.log(matchingBlock);
         // console.log(JSON.stringify({ blockKey, matchingBlock }));
         if (matchingBlock) {
-          executeSolvedBlock({ block: matchingBlock, data: RAW_DATA, dataI });
+          executeSolvedBlock({ block: matchingBlock, inProgressBlocks, data: RAW_DATA, dataPointer: DATA_POINTER });
           instructionI += value * INSTRUCTION_BYTES;
           break;
         } else {
@@ -194,8 +220,8 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
           }
           inProgressBlocks.push(
             newBlock({
-              inputs: { [offsetDataI - dataI]: startValue },
-              inProgressDataI: dataI,
+              inputs: { [offsetDataI - DATA_POINTER.dataI]: startValue },
+              inProgressDataI: DATA_POINTER.dataI,
               key: blockKey,
             }),
           );
@@ -223,5 +249,5 @@ const executeInstructions = (instructions, DATA_TYPE, DATA_LENGTH) => {
   }
 
   solvedBlock({ solvedBlocks, block: inProgressBlocks.pop() });
-  // console.log('\nfinished blocks:', JSON.stringify(solvedBlocks, undefined, 2));
+  console.log('\nfinished blocks:', JSON.stringify(solvedBlocks, undefined, 2), count(solvedBlocks));
 };
